@@ -5,3 +5,5 @@ target/
 *.log
 .DS_Store
 .gemini/
+test_snapshots/
+Cargo.lock

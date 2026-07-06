@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { getElections, buildCreateElectionTx, submitTransaction } from '../services/stellar';
+import { getElections, buildCreateElectionTx } from '../services/stellar';
 import { signTx } from '../wallet/wallet-service';
+import { txManager } from '../services/transactions/tx-manager';
+import { useToast } from '../context/ToastContext';
+import Button from '../components/Button';
 
 interface CreateElectionPageProps {
   walletConnected: boolean;
@@ -17,6 +20,7 @@ const CreateElectionPage = ({
   onNavigate
 }: CreateElectionPageProps) => {
   const queryClient = useQueryClient();
+  const toast = useToast();
   const [step, setStep] = useState(1);
   
   // Form State
@@ -37,67 +41,100 @@ const CreateElectionPage = ({
   });
 
   const addCandidate = () => {
-    if (newCandidate.trim()) {
-      setCandidates([...candidates, newCandidate.trim()]);
-      setNewCandidate('');
+    const trimmed = newCandidate.trim();
+    if (!trimmed) {
+      toast.warning('Candidate name cannot be empty.');
+      return;
     }
+    if (candidates.some(c => c.toLowerCase() === trimmed.toLowerCase())) {
+      toast.warning('Candidate name already exists.');
+      return;
+    }
+    setCandidates([...candidates, trimmed]);
+    setNewCandidate('');
   };
 
   const removeCandidate = (index: number) => {
     setCandidates(candidates.filter((_, i) => i !== index));
   };
 
-  // Mutation to create election
+  // Mutation to create election using unified txManager
   const createElectionMutation = useMutation({
     mutationFn: async () => {
       if (!userAddress || !walletType) {
         throw new Error('Please connect your wallet first');
       }
-      if (!title || !description || candidates.length < 2) {
-        throw new Error('Please fill in all details and add at least 2 candidates');
+      if (!title.trim()) {
+        throw new Error('Election title cannot be empty.');
+      }
+      if (!description.trim()) {
+        throw new Error('Election description cannot be empty.');
+      }
+      if (candidates.length < 2) {
+        throw new Error('Please add at least 2 candidates.');
       }
 
       setTxError(null);
       setTxSuccessHash(null);
-      setLoadingMsg('1. Building Soroban Registry Transaction...');
       
       const newId = elections.length; // auto-incremented ID
       const endTimeSecs = Math.floor(Date.now() / 1000) + (endDays * 24 * 60 * 60);
 
-      const xdr = await buildCreateElectionTx(
-        newId,
-        title,
-        description,
-        candidates,
-        endTimeSecs,
-        userAddress
+      const hash = await txManager.executeTx(
+        `Create Election: "${title.trim()}"`,
+        () => buildCreateElectionTx(
+          newId,
+          title.trim(),
+          description.trim(),
+          candidates,
+          endTimeSecs,
+          userAddress
+        ),
+        (xdr) => signTx(walletType, xdr, userAddress, 'TESTNET'),
+        (status, err) => {
+          if (status === 'signing') {
+            setLoadingMsg('Signing with wallet extension...');
+          } else if (status === 'submitting') {
+            setLoadingMsg('Broadcasting to Stellar Registry Contract...');
+          } else if (status === 'pending') {
+            setLoadingMsg('Transaction pending (network congestion)...');
+          } else if (status === 'success' || status === 'failed') {
+            setLoadingMsg(null);
+          }
+          if (err) {
+            setTxError(err);
+          }
+        }
       );
 
-      setLoadingMsg('2. Signing with wallet extension...');
-      const signedXdr = await signTx(walletType, xdr, userAddress, 'TESTNET');
-
-      setLoadingMsg('3. Broadcasting to Stellar Registry Contract...');
-      const hash = await submitTransaction(signedXdr);
       return { hash, newId };
     },
     onSuccess: (data) => {
       setTxSuccessHash(data.hash);
       setLoadingMsg(null);
+      toast.success('Election created successfully on the Stellar blockchain! Redirecting...');
       queryClient.invalidateQueries({ queryKey: ['elections'] });
-      // Redirect to details after 3 seconds
       setTimeout(() => {
         onNavigate('details', { id: data.newId });
       }, 3000);
     },
     onError: (err: any) => {
-      setTxError(err.message || 'Soroban build or execution error');
+      const errMsg = err.message || 'Soroban build or execution error';
+      setTxError(errMsg);
       setLoadingMsg(null);
+      toast.error(errMsg);
     }
   });
 
   const handleNext = () => {
-    if (step === 1 && (!title || !description)) return;
-    if (step === 2 && candidates.length < 2) return;
+    if (step === 1 && (!title.trim() || !description.trim())) {
+      toast.warning('Please fill in both the title and description.');
+      return;
+    }
+    if (step === 2 && candidates.length < 2) {
+      toast.warning('Please add at least 2 candidates.');
+      return;
+    }
     setStep(step + 1);
   };
 
@@ -156,7 +193,7 @@ const CreateElectionPage = ({
                     type="text"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    className="w-full input-ledger text-body-lg"
+                    className="w-full input-ledger text-body-lg focus:outline-none"
                     placeholder="e.g. Protocol Upgrade Proposal Q4"
                   />
                 </div>
@@ -166,7 +203,7 @@ const CreateElectionPage = ({
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     rows={4}
-                    className="w-full input-ledger text-body-md"
+                    className="w-full input-ledger text-body-md focus:outline-none"
                     placeholder="Provide details about the election, voting criteria, and implications..."
                   />
                 </div>
@@ -183,28 +220,34 @@ const CreateElectionPage = ({
                     type="text"
                     value={newCandidate}
                     onChange={(e) => setNewCandidate(e.target.value)}
-                    className="flex-grow input-ledger text-body-md"
+                    className="flex-grow input-ledger text-body-md focus:outline-none"
                     placeholder="Candidate Name"
+                    onKeyDown={(e) => e.key === 'Enter' && addCandidate()}
                   />
-                  <button 
+                  <Button 
+                    type="button"
                     onClick={addCandidate} 
-                    className="btn-ghost px-4 py-2 font-label-sm text-label-sm uppercase hover:bg-primary/5 transition-colors"
+                    className="btn-ghost px-4 py-2 font-label-sm text-label-sm uppercase hover:bg-primary/5 transition-colors focus:outline-none"
                   >
                     Add
-                  </button>
+                  </Button>
                 </div>
                 
                 <div className="space-y-2 mt-4">
                   {candidates.map((cand, idx) => (
                     <div key={idx} className="flex justify-between items-center bg-surface-container-low p-3 rounded">
-                      <span className="font-body-md">{cand}</span>
-                      <button onClick={() => removeCandidate(idx)} className="text-error hover:opacity-80">
-                        <span className="material-symbols-outlined text-sm">delete</span>
+                      <span className="font-body-md text-on-surface">{cand}</span>
+                      <button 
+                        type="button"
+                        onClick={() => removeCandidate(idx)} 
+                        className="text-error hover:opacity-80 p-1 focus:outline-none"
+                      >
+                        <span className="material-symbols-outlined text-sm block">delete</span>
                       </button>
                     </div>
                   ))}
                   {candidates.length < 2 && (
-                    <p className="text-error text-xs font-label-sm">Please add at least 2 candidates to build a valid voting card.</p>
+                    <p className="text-error text-xs font-label-sm mt-2">Please add at least 2 candidates to build a valid voting card.</p>
                   )}
                 </div>
               </div>
@@ -237,7 +280,7 @@ const CreateElectionPage = ({
                   <select
                     value={endDays}
                     onChange={(e) => setEndDays(Number(e.target.value))}
-                    className="w-full input-ledger text-body-md"
+                    className="w-full input-ledger text-body-md focus:outline-none"
                   >
                     <option value={1}>1 Day</option>
                     <option value={3}>3 Days</option>
@@ -296,14 +339,15 @@ const CreateElectionPage = ({
                     Please connect your wallet first to authorize the creation transaction.
                   </div>
                 ) : (
-                  <button
+                  <Button
+                    type="button"
                     onClick={() => createElectionMutation.mutate()}
-                    disabled={createElectionMutation.isPending}
-                    className="w-full bg-[#B8860B] text-on-primary font-label-md px-6 py-4 rounded uppercase hover:opacity-90 transition-opacity flex justify-center items-center gap-2"
+                    loading={createElectionMutation.isPending}
+                    className="w-full bg-[#B8860B] text-on-primary font-label-md px-6 py-4 rounded uppercase hover:opacity-90 transition-opacity flex justify-center items-center gap-2 focus:outline-none"
                   >
                     <span>Publish to Stellar Ledger</span>
                     <span className="material-symbols-outlined">rocket_launch</span>
-                  </button>
+                  </Button>
                 )}
               </div>
             </div>
@@ -312,24 +356,26 @@ const CreateElectionPage = ({
           {/* Navigation Controls */}
           <div className="flex justify-between items-center mt-12 pt-8 border-t border-outline-variant/30">
             {step > 1 ? (
-              <button 
+              <Button 
+                type="button"
                 onClick={() => setStep(step - 1)}
-                className="btn-ghost px-6 py-2 rounded font-label-sm text-label-sm transition-colors"
+                className="btn-ghost px-6 py-2 rounded font-label-sm text-label-sm transition-colors focus:outline-none"
               >
                 Back
-              </button>
+              </Button>
             ) : (
               <div></div>
             )}
             
             {step < 5 && (
-              <button 
+              <Button 
+                type="button"
                 onClick={handleNext}
-                disabled={(step === 1 && (!title || !description)) || (step === 2 && candidates.length < 2)}
-                className="btn-primary px-6 py-2 rounded font-label-sm text-label-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={(step === 1 && (!title.trim() || !description.trim())) || (step === 2 && candidates.length < 2)}
+                className="btn-primary px-6 py-2 rounded font-label-sm text-label-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none"
               >
                 Next
-              </button>
+              </Button>
             )}
           </div>
 

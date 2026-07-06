@@ -9,7 +9,7 @@ import { scValToNative } from '@stellar/stellar-sdk';
 export interface ContractEvent {
   id: string;
   contractId: string;
-  type: 'election_created' | 'election_closed' | 'vote_cast' | 'results_updated' | 'results_finalized';
+  type: 'election_created' | 'election_updated' | 'election_closed' | 'vote_cast' | 'results_updated' | 'results_finalized';
   data: any;
   ledger: number;
 }
@@ -109,13 +109,19 @@ class EventStreamService {
       let type: ContractEvent['type'] | null = null;
       let data: any = {};
 
-      if (category === 'registry' && name === 'created') {
+      if (category === 'registry' && name === 'election_created') {
         type = 'election_created';
         data = {
           id: Number(rawData[0]),
           title: rawData[1].toString()
         };
-      } else if (category === 'registry' && name === 'closed') {
+      } else if (category === 'registry' && name === 'election_updated') {
+        type = 'election_updated';
+        data = {
+          id: Number(rawData[0]),
+          title: rawData[1].toString()
+        };
+      } else if (category === 'registry' && name === 'election_closed') {
         type = 'election_closed';
         data = {
           id: Number(rawData)
@@ -127,7 +133,7 @@ class EventStreamService {
           voter: rawData[1].toString(),
           candidateIdx: Number(rawData[2])
         };
-      } else if (category === 'results' && name === 'updated') {
+      } else if (category === 'results' && name === 'result_calculated') {
         type = 'results_updated';
         data = {
           electionId: Number(rawData[0]),

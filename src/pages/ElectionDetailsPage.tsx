@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
   getElection, 
@@ -8,12 +8,14 @@ import {
   buildCastVoteTx,
   buildCloseElectionTx,
   buildCalculateResultsTx,
-  submitTransaction,
   CONTRACT_REGISTRY_ID,
   CONTRACT_VOTING_ID,
   CONTRACT_RESULTS_ID
 } from '../services/stellar';
 import { signTx } from '../wallet/wallet-service';
+import { txManager } from '../services/transactions/tx-manager';
+import { useToast } from '../context/ToastContext';
+import Button from '../components/Button';
 
 interface ElectionDetailsPageProps {
   electionId: number;
@@ -31,6 +33,7 @@ const ElectionDetailsPage = ({
   onNavigate
 }: ElectionDetailsPageProps) => {
   const queryClient = useQueryClient();
+  const toast = useToast();
   const [txError, setTxError] = useState<string | null>(null);
   const [txSuccessHash, setTxSuccessHash] = useState<string | null>(null);
   const [loadingMsg, setLoadingMsg] = useState<string | null>(null);
@@ -62,7 +65,7 @@ const ElectionDetailsPage = ({
     enabled: !!election?.closed
   });
 
-  // Cast vote mutation
+  // Cast vote mutation using unified txManager
   const castVoteMutation = useMutation({
     mutationFn: async (candidateIdx: number) => {
       if (!userAddress || !walletType) {
@@ -70,31 +73,45 @@ const ElectionDetailsPage = ({
       }
       setTxError(null);
       setTxSuccessHash(null);
-      setLoadingMsg('1. Building Soroban Cast Vote Transaction...');
-      
-      const xdr = await buildCastVoteTx(electionId, candidateIdx, userAddress);
-      
-      setLoadingMsg('2. Waiting for Wallet Signature...');
-      const signedXdr = await signTx(walletType, xdr, userAddress, 'TESTNET');
-      
-      setLoadingMsg('3. Submitting to Stellar Testnet RPC...');
-      const hash = await submitTransaction(signedXdr);
+
+      const hash = await txManager.executeTx(
+        `Cast Vote (Candidate #${candidateIdx + 1})`,
+        () => buildCastVoteTx(electionId, candidateIdx, userAddress),
+        (xdr) => signTx(walletType, xdr, userAddress, 'TESTNET'),
+        (status, err) => {
+          if (status === 'signing') {
+            setLoadingMsg('Waiting for Wallet Signature...');
+          } else if (status === 'submitting') {
+            setLoadingMsg('Submitting to Stellar Testnet RPC...');
+          } else if (status === 'pending') {
+            setLoadingMsg('Transaction pending (network congestion)...');
+          } else if (status === 'success' || status === 'failed') {
+            setLoadingMsg(null);
+          }
+          if (err) {
+            setTxError(err);
+          }
+        }
+      );
       return hash;
     },
     onSuccess: (hash) => {
       setTxSuccessHash(hash);
       setLoadingMsg(null);
+      toast.success('Your vote was successfully cast and recorded on-chain!');
       refetchVoted();
       queryClient.invalidateQueries({ queryKey: ['election', electionId] });
       queryClient.invalidateQueries({ queryKey: ['results', electionId] });
     },
     onError: (err: any) => {
-      setTxError(err.message || 'Transaction simulation or submission failed');
+      const errMsg = err.message || 'Transaction simulation or submission failed';
+      setTxError(errMsg);
       setLoadingMsg(null);
+      toast.error(errMsg);
     }
   });
 
-  // Close election mutation (Admin helper)
+  // Close election mutation (Admin helper) using unified txManager
   const closeElectionMutation = useMutation({
     mutationFn: async () => {
       if (!userAddress || !walletType) {
@@ -102,56 +119,88 @@ const ElectionDetailsPage = ({
       }
       setTxError(null);
       setTxSuccessHash(null);
-      setLoadingMsg('1. Building Close Election Transaction...');
-      
-      const xdr = await buildCloseElectionTx(electionId, userAddress);
-      
-      setLoadingMsg('2. Signing with wallet...');
-      const signedXdr = await signTx(walletType, xdr, userAddress, 'TESTNET');
-      
-      setLoadingMsg('3. Submitting to Testnet...');
-      const hash = await submitTransaction(signedXdr);
+
+      const hash = await txManager.executeTx(
+        `Close Election #${electionId}`,
+        () => buildCloseElectionTx(electionId, userAddress),
+        (xdr) => signTx(walletType, xdr, userAddress, 'TESTNET'),
+        (status, err) => {
+          if (status === 'signing') {
+            setLoadingMsg('Signing with wallet...');
+          } else if (status === 'submitting') {
+            setLoadingMsg('Submitting to Testnet...');
+          } else if (status === 'pending') {
+            setLoadingMsg('Transaction pending (network congestion)...');
+          } else if (status === 'success' || status === 'failed') {
+            setLoadingMsg(null);
+          }
+          if (err) {
+            setTxError(err);
+          }
+        }
+      );
       return hash;
     },
     onSuccess: () => {
       setLoadingMsg('Calculation results phase incoming...');
-      // Chain to calculate results after closing
+      toast.info('Election closed on-chain. Invoking votes tally...');
       calculateResultsMutation.mutate();
     },
     onError: (err: any) => {
-      setTxError(err.message || 'Failed to close election');
+      const errMsg = err.message || 'Failed to close election';
+      setTxError(errMsg);
       setLoadingMsg(null);
+      toast.error(errMsg);
     }
   });
 
-  // Calculate results mutation
+  // Calculate results mutation using unified txManager
   const calculateResultsMutation = useMutation({
     mutationFn: async () => {
       if (!userAddress || !walletType) {
         throw new Error('Please connect your wallet first');
       }
-      setLoadingMsg('Building Tally & Winners Calculation Transaction...');
-      const xdr = await buildCalculateResultsTx(electionId, userAddress);
-      
-      setLoadingMsg('Signing tally transaction...');
-      const signedXdr = await signTx(walletType, xdr, userAddress, 'TESTNET');
-      
-      setLoadingMsg('Submitting Tally to Soroban Results Contract...');
-      const hash = await submitTransaction(signedXdr);
+      const hash = await txManager.executeTx(
+        `Calculate Results for Election #${electionId}`,
+        () => buildCalculateResultsTx(electionId, userAddress),
+        (xdr) => signTx(walletType, xdr, userAddress, 'TESTNET'),
+        (status, err) => {
+          if (status === 'signing') {
+            setLoadingMsg('Signing tally transaction...');
+          } else if (status === 'submitting') {
+            setLoadingMsg('Submitting Tally to Soroban Results Contract...');
+          } else if (status === 'pending') {
+            setLoadingMsg('Transaction pending (network congestion)...');
+          } else if (status === 'success' || status === 'failed') {
+            setLoadingMsg(null);
+          }
+          if (err) {
+            setTxError(err);
+          }
+        }
+      );
       return hash;
     },
     onSuccess: (hash) => {
       setTxSuccessHash(hash);
       setLoadingMsg(null);
+      toast.success('Election results successfully tallied and finalized!');
       queryClient.invalidateQueries({ queryKey: ['election', electionId] });
       refetchResults();
       refetchWinner();
     },
     onError: (err: any) => {
-      setTxError(err.message || 'Failed to calculate results');
+      const errMsg = err.message || 'Failed to calculate results';
+      setTxError(errMsg);
       setLoadingMsg(null);
+      toast.error(errMsg);
     }
   });
+
+  // Memoize results calculations to prevent unnecessary re-runs
+  const totalTally = useMemo(() => {
+    return results.reduce((acc, r) => acc + r, 0);
+  }, [results]);
 
   if (loadingElection) {
     return (
@@ -164,12 +213,16 @@ const ElectionDetailsPage = ({
 
   if (electionError || !election) {
     return (
-      <div className="max-w-container-max mx-auto px-margin-desktop py-12 text-center">
+      <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-12 text-center">
         <div className="bg-error-container text-on-error-container p-8 rounded-xl">
           <span className="material-symbols-outlined text-5xl mb-4">error</span>
           <h2 className="font-headline-sm text-headline-sm mb-2">Election Not Found</h2>
           <p className="font-body-md text-body-md mb-6">Could not find election registry with ID #{electionId} on the ledger.</p>
-          <button onClick={() => onNavigate('explore')} className="bg-primary text-on-primary px-6 py-2 rounded">
+          <button 
+            type="button" 
+            onClick={() => onNavigate('explore')} 
+            className="bg-primary text-on-primary px-6 py-2 rounded focus:outline-none"
+          >
             Back to Explore
           </button>
         </div>
@@ -180,15 +233,13 @@ const ElectionDetailsPage = ({
   const isExpired = Date.now() / 1000 > election.end_time;
   const isClosed = election.closed;
 
-  // Total votes tally for progress bars
-  const totalTally = results.reduce((acc, r) => acc + r, 0);
-
   return (
     <div className="max-w-container-max mx-auto w-full px-margin-mobile md:px-margin-desktop py-12">
       {/* Back button */}
       <button 
+        type="button"
         onClick={() => onNavigate('explore')}
-        className="flex items-center gap-1 text-on-surface-variant hover:text-primary mb-8 transition-colors"
+        className="flex items-center gap-1 text-on-surface-variant hover:text-primary mb-8 transition-colors focus:outline-none"
       >
         <span className="material-symbols-outlined text-sm">arrow_back</span>
         <span className="font-label-sm text-label-sm uppercase">Back to list</span>
@@ -210,14 +261,15 @@ const ElectionDetailsPage = ({
         {isExpired && !isClosed && (
           <div className="bg-surface-container-low p-4 rounded-lg border border-outline-variant flex flex-col gap-2">
             <p className="font-label-sm text-label-sm text-on-surface-variant">Voting finished but tally not run yet</p>
-            <button
+            <Button
+              type="button"
               onClick={() => closeElectionMutation.mutate()}
-              disabled={closeElectionMutation.isPending || calculateResultsMutation.isPending}
-              className="bg-primary text-on-primary font-label-sm text-label-sm px-6 py-3 uppercase tracking-wider hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+              loading={closeElectionMutation.isPending || calculateResultsMutation.isPending}
+              className="bg-primary text-on-primary font-label-sm text-label-sm px-6 py-3 uppercase tracking-wider hover:opacity-90 transition-opacity flex items-center justify-center gap-2 focus:outline-none"
             >
               Close & Tally Votes
               <span className="material-symbols-outlined text-sm">analytics</span>
-            </button>
+            </Button>
           </div>
         )}
       </header>
@@ -230,7 +282,7 @@ const ElectionDetailsPage = ({
           <p className="font-body-md text-body-md text-on-surface-variant mb-6">
             All voting operations on VoteSphere are executed inside a secure sandboxed WebAssembly execution environment on the Stellar Soroban network. Once submitted, your vote is cryptographically tied to the election's contract state and cannot be modified or censored.
           </p>
-          <div className="bg-surface-container-low p-4 rounded border border-outline-variant/30">
+          <div className="bg-surface-container-low p-4 rounded border border-outline-variant/30 overflow-x-auto">
             <h4 className="font-label-sm text-label-sm text-on-surface uppercase mb-2">Technical Details</h4>
             <ul className="list-disc pl-5 font-body-md text-sm text-on-surface-variant space-y-1">
               <li>Registry Contract: <span className="font-mono text-xs break-all">{CONTRACT_REGISTRY_ID}</span></li>
@@ -260,14 +312,14 @@ const ElectionDetailsPage = ({
               <div className="flex justify-between border-b border-outline-variant/30 pb-2">
                 <span className="text-on-surface-variant font-body-md">Your Status:</span>
                 <span className="font-label-md text-on-surface">
-                  {!walletConnected ? 'Wallet Connected required' : voted ? 'Vote Recorded' : 'Not Voted Yet'}
+                  {!walletConnected ? 'Wallet Required' : voted ? 'Vote Recorded' : 'Not Voted Yet'}
                 </span>
               </div>
             </div>
           </div>
           
           <div className="mt-8 text-center">
-            <span className="material-symbols-outlined text-4xl text-primary opacity-50">gavel</span>
+            <span className="material-symbols-outlined text-4xl text-primary opacity-50 block">gavel</span>
           </div>
         </section>
       </div>
@@ -297,7 +349,7 @@ const ElectionDetailsPage = ({
 
           {txSuccessHash && (
             <div className="bg-secondary-container border border-secondary/20 text-on-secondary-container p-6 rounded-xl flex items-center gap-4">
-              <span className="material-symbols-outlined text-3xl">done</span>
+              <span className="material-symbols-outlined text-3xl text-emerald-600">done</span>
               <div>
                 <h4 className="font-label-md text-label-md uppercase">Transaction Complete</h4>
                 <p className="font-body-md text-sm mb-2">Your action has been confirmed on the Stellar blockchain.</p>
@@ -305,7 +357,7 @@ const ElectionDetailsPage = ({
                   href={`https://stellar.expert/explorer/testnet/tx/${txSuccessHash}`} 
                   target="_blank" 
                   rel="noreferrer"
-                  className="font-mono text-xs underline break-all"
+                  className="font-mono text-xs underline break-all hover:text-primary transition-colors"
                 >
                   Tx Hash: {txSuccessHash}
                 </a>
@@ -327,7 +379,6 @@ const ElectionDetailsPage = ({
             const votePercent = totalTally > 0 ? Math.round((votes / totalTally) * 100) : 0;
             const isWinner = isClosed && idx === winnerIdx && votes > 0;
 
-            // Seeded image so candidates match the Stitch premium portraits
             const portraits = [
               "https://lh3.googleusercontent.com/aida-public/AB6AXuDlkiBeYCk6Ro1Mzb62vOgYFCKoVOTn1Se4Vy-Jz1UGvzPVfIDG9_eQrDih9dv4Khlphy_VvD1enMQm-yUpvAc8lTYcaSflWsi4biJrlbWRbEVStAWELFo76KLsyN9O8udf-3efosO0SHuuxy0HRvt3ihoIZgxdo9lCpQiMPmvNGpa6ZDXrc9qRdFo_41QEhpokfKuX0tFH2FCXZ9IUz8HNNg95skuHfqTpkBBXRaNG7-boh0EyYqTO5w",
               "https://lh3.googleusercontent.com/aida-public/AB6AXuD9-4HHammXyaBWbkzzdof5GFEMeCOMgCyJ1vQ4KU8A4xkzwexflwR7wzHK5YYxkyCPGxnmS3gYI7onM1JCZ3mMOhRtTCb-GhnVrIIGO9zZmhmlZwof13VbDsBMTmJDVz-6dEdei2Tp0ESnT8kWSFFq22axj2MaW4QRY7z5IkQ2dmJntoAWqJ1M0R5WZkwW8Idvq73ZQU_mp-rEkUZtCC7NaksTbo74S6sohUhJwlhiwyhtPzM0dDsyWw",
@@ -343,18 +394,18 @@ const ElectionDetailsPage = ({
                 }`}
               >
                 {isWinner && (
-                  <div className="absolute top-0 right-0 bg-primary text-on-primary px-3 py-1 text-xs uppercase tracking-widest font-label-sm">
+                  <div className="absolute top-0 right-0 bg-primary text-on-primary px-3 py-1 text-xs uppercase tracking-widest font-label-sm z-10">
                     Winner
                   </div>
                 )}
 
                 <div>
                   <div className="flex items-center gap-4 mb-4">
-                    <div className="w-16 h-16 rounded-full overflow-hidden border border-outline-variant">
+                    <div className="w-16 h-16 rounded-full overflow-hidden border border-outline-variant shrink-0">
                       <img className="w-full h-full object-cover" alt={cand} src={pImage} />
                     </div>
                     <div>
-                      <h3 className="font-headline-sm text-headline-sm text-on-surface">{cand}</h3>
+                      <h3 className="font-headline-sm text-headline-sm text-on-surface line-clamp-1">{cand}</h3>
                       <p className="font-label-sm text-secondary uppercase tracking-widest">Candidate #{idx + 1}</p>
                     </div>
                   </div>
@@ -373,15 +424,28 @@ const ElectionDetailsPage = ({
                       </div>
                     </div>
                   ) : (
-                    // Active voting controls
-                    <button
-                      onClick={() => castVoteMutation.mutate(idx)}
-                      disabled={castVoteMutation.isPending || voted || isExpired}
-                      className="w-full bg-[#B8860B] text-on-primary font-label-md px-6 py-3 rounded uppercase hover:opacity-90 transition-opacity flex justify-center items-center gap-2 disabled:bg-outline/30 disabled:cursor-not-allowed"
-                    >
-                      <span>{voted ? 'Vote Recorded' : `Vote for Candidate ${idx + 1}`}</span>
-                      <span className="material-symbols-outlined text-sm">how_to_vote</span>
-                    </button>
+                    // Active voting controls with validation
+                    !walletConnected ? (
+                      <button
+                        type="button"
+                        onClick={() => toast.warning('Please connect your wallet first at the top of the page!')}
+                        className="w-full bg-surface-container border border-outline-variant/30 text-on-surface-variant font-label-md px-6 py-3 rounded uppercase transition-colors flex justify-center items-center gap-2 focus:outline-none"
+                      >
+                        <span>Connect to Vote</span>
+                        <span className="material-symbols-outlined text-sm">lock</span>
+                      </button>
+                    ) : (
+                      <Button
+                        type="button"
+                        loading={castVoteMutation.isPending && castVoteMutation.variables === idx}
+                        onClick={() => castVoteMutation.mutate(idx)}
+                        disabled={castVoteMutation.isPending || voted || isExpired}
+                        className="w-full bg-[#B8860B] text-on-primary font-label-md px-6 py-3 rounded uppercase hover:opacity-90 transition-opacity flex justify-center items-center gap-2 disabled:bg-outline/30 disabled:cursor-not-allowed focus:outline-none"
+                      >
+                        <span>{voted ? 'Vote Recorded' : `Vote for Candidate ${idx + 1}`}</span>
+                        <span className="material-symbols-outlined text-sm">how_to_vote</span>
+                      </Button>
+                    )
                   )}
                 </div>
               </div>

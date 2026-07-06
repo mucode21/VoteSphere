@@ -6,6 +6,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>VoteSphere</title>
 
+  <!-- Theme loader to prevent flashing -->
+  <script>
+    (function () {
+      const theme = localStorage.getItem('votesphere_theme') || 'light';
+      const root = document.documentElement;
+      if (theme === 'dark') {
+        root.classList.add('dark');
+        root.classList.remove('light');
+      } else {
+        root.classList.add('light');
+        root.classList.remove('dark');
+      }
+    })();
+  </script>
+
   <!-- Tailwind CSS CDN with forms and container queries plugins -->
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 

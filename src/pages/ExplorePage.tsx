@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getElections, Election, CONTRACT_REGISTRY_ID } from '../services/stellar';
 
@@ -18,24 +18,26 @@ const ExplorePage = ({ onNavigate }: ExplorePageProps) => {
 
   const categories = ['All', 'DAO', 'Protocol', 'Corporate'];
 
-  const filteredElections = elections.filter((e: Election) => {
-    // 1. Search term match
-    const matchesSearch = 
-      e.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      e.description.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredElections = useMemo(() => {
+    return elections.filter((e: Election) => {
+      // 1. Search term match
+      const matchesSearch = 
+        e.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        e.description.toLowerCase().includes(searchTerm.toLowerCase());
 
-    // 2. Status match
-    const matchesStatus = 
-      activeStatus === 'all' || 
-      (activeStatus === 'active' && !e.closed) ||
-      (activeStatus === 'closed' && e.closed);
+      // 2. Status match
+      const matchesStatus = 
+        activeStatus === 'all' || 
+        (activeStatus === 'active' && !e.closed) ||
+        (activeStatus === 'closed' && e.closed);
 
-    // 3. Category match (deterministic category based on election ID to keep it rich)
-    const category = e.id % 3 === 0 ? 'Protocol' : e.id % 3 === 1 ? 'DAO' : 'Corporate';
-    const matchesCategory = activeCategory === 'All' || category === activeCategory;
+      // 3. Category match (deterministic category based on election ID to keep it rich)
+      const category = e.id % 3 === 0 ? 'Protocol' : e.id % 3 === 1 ? 'DAO' : 'Corporate';
+      const matchesCategory = activeCategory === 'All' || category === activeCategory;
 
-    return matchesSearch && matchesStatus && matchesCategory;
-  });
+      return matchesSearch && matchesStatus && matchesCategory;
+    });
+  }, [elections, searchTerm, activeStatus, activeCategory]);
 
   return (
     <div className="max-w-container-max mx-auto w-full px-margin-mobile md:px-margin-desktop py-8 md:py-16">

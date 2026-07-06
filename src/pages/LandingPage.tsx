@@ -25,7 +25,7 @@ const LandingPage = ({ onNavigate }: LandingPageProps) => {
     <div>
       {/* Hero Section */}
       <section className="relative min-h-[870px] flex items-center pt-24 pb-32 overflow-hidden bg-background">
-        <div className="max-w-container-max mx-auto px-margin-desktop relative z-10 w-full grid grid-cols-1 lg:grid-cols-12 gap-gutter items-center">
+        <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop relative z-10 w-full grid grid-cols-1 lg:grid-cols-12 gap-gutter items-center">
           <div className="lg:col-span-7 flex flex-col items-start text-left">
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-secondary-container/20 border border-outline-variant/50 rounded-full mb-8">
               <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
@@ -134,7 +134,7 @@ const LandingPage = ({ onNavigate }: LandingPageProps) => {
 
       {/* Bento Grid Features Section */}
       <section className="py-32 bg-surface-container-low">
-        <div className="max-w-container-max mx-auto px-margin-desktop">
+        <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop">
           <div className="text-center mb-16">
             <h2 className="font-headline-md text-headline-md mb-4 text-on-surface">Impeccable Record Keeping</h2>
             <p className="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mx-auto">Built on the Stellar consensus protocol, ensuring every transaction is permanently inscribed and universally auditable.</p>

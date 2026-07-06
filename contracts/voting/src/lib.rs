@@ -1,5 +1,5 @@
 #![no_std]
-use soroban_sdk::{contract, contractimpl, contracttype, symbol_short, Address, Env, String, Vec, Symbol, IntoVal};
+use soroban_sdk::{contract, contractimpl, contracttype, Address, Env, String, Vec, Symbol, IntoVal, BytesN};
 
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -15,6 +15,7 @@ pub struct Election {
 
 #[contracttype]
 pub enum DataKey {
+    Admin,
     Voted(u32, Address),     // (election_id, voter_address) -> bool
     VoteCount(u32, u32),     // (election_id, candidate_idx) -> u32
 }
@@ -44,6 +45,25 @@ pub struct VotingContract;
 
 #[contractimpl]
 impl VotingContract {
+    pub fn initialize(env: Env, admin: Address) {
+        if env.storage().instance().has(&DataKey::Admin) {
+            panic!("Already initialized");
+        }
+        env.storage().instance().set(&DataKey::Admin, &admin);
+    }
+
+    pub fn upgrade(env: Env, new_wasm_hash: BytesN<32>) {
+        let admin: Address = env.storage().instance().get(&DataKey::Admin).expect("Not initialized");
+        admin.require_auth();
+
+        env.deployer().update_current_contract_wasm(new_wasm_hash);
+
+        env.events().publish(
+            (Symbol::new(&env, "upgrade"), Symbol::new(&env, "contract_upgraded")),
+            Symbol::new(&env, "voting"),
+        );
+    }
+
     pub fn cast_vote(
         env: Env,
         election_id: u32,
@@ -92,7 +112,7 @@ impl VotingContract {
 
         // Emit event
         env.events().publish(
-            (symbol_short!("voting"), symbol_short!("vote_cast")),
+            (Symbol::new(&env, "voting"), Symbol::new(&env, "vote_cast")),
             (election_id, voter, candidate_idx),
         );
     }
@@ -108,5 +128,102 @@ impl VotingContract {
             .persistent()
             .get(&count_key)
             .unwrap_or(0)
+    }
+
+    pub fn vote_count(env: Env, election_id: u32, candidate_idx: u32) -> u32 {
+        Self::get_vote_count(env, election_id, candidate_idx)
+    }
+
+    pub fn candidate_count(env: Env, election_id: u32, registry_contract: Address) -> u32 {
+        let registry_client = RegistryContractClient::new(&env, registry_contract);
+        let election = registry_client.get_election(election_id);
+        election.candidates.len()
+    }
+
+    pub fn version(_env: Env) -> u32 {
+        1
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use soroban_sdk::{contract, contractimpl, testutils::Address as _, Address, Env, String, Vec};
+
+    #[contract]
+    pub struct MockRegistryContract;
+
+    #[contractimpl]
+    impl MockRegistryContract {
+        pub fn get_election(env: Env, id: u32) -> Election {
+            let mut candidates = Vec::new(&env);
+            candidates.push_back(String::from_str(&env, "Yes"));
+            candidates.push_back(String::from_str(&env, "No"));
+            Election {
+                id,
+                title: String::from_str(&env, "DAO Proposal"),
+                description: String::from_str(&env, "DAO Proposal Description"),
+                candidates,
+                end_time: env.ledger().timestamp() + 3600,
+                closed: false,
+                result_contract: Address::generate(&env),
+            }
+        }
+    }
+
+    #[test]
+    fn test_initialize_voting() {
+        let env = Env::default();
+        let contract_id = env.register_contract(None, VotingContract);
+        let client = VotingContractClient::new(&env, &contract_id);
+
+        let admin = Address::generate(&env);
+        client.initialize(&admin);
+        
+        // Assert we can run version
+        assert_eq!(client.version(), 1);
+    }
+
+    #[test]
+    fn test_cast_vote() {
+        let env = Env::default();
+        env.mock_all_auths();
+
+        let contract_id = env.register_contract(None, VotingContract);
+        let client = VotingContractClient::new(&env, &contract_id);
+
+        let admin = Address::generate(&env);
+        client.initialize(&admin);
+
+        let mock_registry_id = env.register_contract(None, MockRegistryContract);
+        let voter = Address::generate(&env);
+
+        assert_eq!(client.has_voted(&1, &voter), false);
+        assert_eq!(client.get_vote_count(&1, &0), 0);
+
+        client.cast_vote(&1, &voter, &0, &mock_registry_id);
+
+        assert_eq!(client.has_voted(&1, &voter), true);
+        assert_eq!(client.get_vote_count(&1, &0), 1);
+        assert_eq!(client.get_vote_count(&1, &1), 0);
+    }
+
+    #[test]
+    #[should_panic(expected = "Voter has already voted")]
+    fn test_double_vote_panics() {
+        let env = Env::default();
+        env.mock_all_auths();
+
+        let contract_id = env.register_contract(None, VotingContract);
+        let client = VotingContractClient::new(&env, &contract_id);
+
+        let admin = Address::generate(&env);
+        client.initialize(&admin);
+
+        let mock_registry_id = env.register_contract(None, MockRegistryContract);
+        let voter = Address::generate(&env);
+
+        client.cast_vote(&1, &voter, &0, &mock_registry_id);
+        client.cast_vote(&1, &voter, &1, &mock_registry_id);
     }
 }
