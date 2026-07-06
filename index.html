@@ -164,6 +164,22 @@
 </head>
 
 <body class="bg-background text-on-surface antialiased flex flex-col min-h-screen">
+  <!-- Uncaught Error Reporter for debugging -->
+  <div id="error-reporter" style="display:none; padding: 20px; background: #ffdad6; color: #93000a; font-family: monospace; border: 2px solid #ba1a1a; z-index: 999999; position: relative;">
+    <h3>Uncaught Runtime Error:</h3>
+    <pre id="error-message"></pre>
+  </div>
+  <script>
+    window.addEventListener('error', function(event) {
+      document.getElementById('error-reporter').style.display = 'block';
+      document.getElementById('error-message').textContent += event.message + '\n' + (event.error ? event.error.stack : '') + '\n';
+    });
+    window.addEventListener('unhandledrejection', function(event) {
+      document.getElementById('error-reporter').style.display = 'block';
+      document.getElementById('error-message').textContent += 'Unhandled Promise Rejection: ' + event.reason + '\n';
+    });
+  </script>
+
   <div id="root"></div>
   <script type="module" src="/src/main.tsx"></script>
 </body>

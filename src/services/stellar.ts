@@ -11,16 +11,14 @@ import {
   Account
 } from '@stellar/stellar-sdk';
 
-const meta = import.meta as any;
-
 // Load from environment or use default Testnet addresses
-export const CONTRACT_REGISTRY_ID = meta.env.CONTRACT_REGISTRY_ID || 'CA4PKYMOWPZXDS55JTHZNETKTZUPL22I35TKZRE7HUDZZVE65SFDGHE5';
-export const CONTRACT_VOTING_ID = meta.env.CONTRACT_VOTING_ID || 'CCDHHB2FUCAFU6GSTDEW7UGOMWHV3GF5QZNZGUAI2QO2XHNZYFTXGTXE';
-export const CONTRACT_RESULTS_ID = meta.env.CONTRACT_RESULTS_ID || 'CB7PZAP6KNAZGYSPHJUGLK6ECYE4O6XQHV7FCSRJTRX4JY2DC5QGD52K';
+export const CONTRACT_REGISTRY_ID = (import.meta as any).env.CONTRACT_REGISTRY_ID || 'CA4PKYMOWPZXDS55JTHZNETKTZUPL22I35TKZRE7HUDZZVE65SFDGHE5';
+export const CONTRACT_VOTING_ID = (import.meta as any).env.CONTRACT_VOTING_ID || 'CCDHHB2FUCAFU6GSTDEW7UGOMWHV3GF5QZNZGUAI2QO2XHNZYFTXGTXE';
+export const CONTRACT_RESULTS_ID = (import.meta as any).env.CONTRACT_RESULTS_ID || 'CB7PZAP6KNAZGYSPHJUGLK6ECYE4O6XQHV7FCSRJTRX4JY2DC5QGD52K';
 
-export const RPC_URL = meta.env.RPC_URL || 'https://soroban-testnet.stellar.org';
-export const HORIZON_URL = meta.env.HORIZON_URL || 'https://horizon-testnet.stellar.org';
-export const NETWORK_PASSPHRASE = meta.env.NETWORK_PASSPHRASE || Networks.TESTNET;
+export const RPC_URL = (import.meta as any).env.RPC_URL || 'https://soroban-testnet.stellar.org';
+export const HORIZON_URL = (import.meta as any).env.HORIZON_URL || 'https://horizon-testnet.stellar.org';
+export const NETWORK_PASSPHRASE = (import.meta as any).env.NETWORK_PASSPHRASE || Networks.TESTNET;
 
 export const rpcServer = new rpc.Server(RPC_URL);
 export const horizonServer = new Horizon.Server(HORIZON_URL);
