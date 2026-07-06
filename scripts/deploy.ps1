@@ -54,9 +54,15 @@ $envContent = @"
 CONTRACT_REGISTRY_ID=$registryContractId
 CONTRACT_VOTING_ID=$votingContractId
 CONTRACT_RESULTS_ID=$resultContractId
+VITE_CONTRACT_REGISTRY_ID=$registryContractId
+VITE_CONTRACT_VOTING_ID=$votingContractId
+VITE_CONTRACT_RESULTS_ID=$resultContractId
 NETWORK_PASSPHRASE=Test SDF Network ; September 2015
 RPC_URL=https://soroban-testnet.stellar.org
 HORIZON_URL=https://horizon-testnet.stellar.org
+VITE_RPC_URL=https://soroban-testnet.stellar.org
+VITE_HORIZON_URL=https://horizon-testnet.stellar.org
+VITE_NETWORK_PASSPHRASE=Test SDF Network ; September 2015
 "@
 
 Set-Content -Path "./.env" -Value $envContent

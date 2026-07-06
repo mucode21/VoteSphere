@@ -12,13 +12,13 @@ import {
 } from '@stellar/stellar-sdk';
 
 // Load from environment or use default Testnet addresses
-export const CONTRACT_REGISTRY_ID = (import.meta as any).env.CONTRACT_REGISTRY_ID || 'CA4PKYMOWPZXDS55JTHZNETKTZUPL22I35TKZRE7HUDZZVE65SFDGHE5';
-export const CONTRACT_VOTING_ID = (import.meta as any).env.CONTRACT_VOTING_ID || 'CCDHHB2FUCAFU6GSTDEW7UGOMWHV3GF5QZNZGUAI2QO2XHNZYFTXGTXE';
-export const CONTRACT_RESULTS_ID = (import.meta as any).env.CONTRACT_RESULTS_ID || 'CB7PZAP6KNAZGYSPHJUGLK6ECYE4O6XQHV7FCSRJTRX4JY2DC5QGD52K';
+export const CONTRACT_REGISTRY_ID = (import.meta as any).env.VITE_CONTRACT_REGISTRY_ID || 'CDDB4SGVCZVYNA2VOY4KTLWGR5VY6KFUVWD4S7A23NA4COQBP4QPH74M';
+export const CONTRACT_VOTING_ID = (import.meta as any).env.VITE_CONTRACT_VOTING_ID || 'CD2QP33BUWEMLWTEYV6XTDE56P5TJQC2VMGUN5C36OL3BHMLL6EZSILD';
+export const CONTRACT_RESULTS_ID = (import.meta as any).env.VITE_CONTRACT_RESULTS_ID || 'CADRSVZOA3KQQD6ZA5OJ2DFDI6TRQRC6LW4TXFZQ6YKPJZBU4DJBWIDH';
 
-export const RPC_URL = (import.meta as any).env.RPC_URL || 'https://soroban-testnet.stellar.org';
-export const HORIZON_URL = (import.meta as any).env.HORIZON_URL || 'https://horizon-testnet.stellar.org';
-export const NETWORK_PASSPHRASE = (import.meta as any).env.NETWORK_PASSPHRASE || Networks.TESTNET;
+export const RPC_URL = (import.meta as any).env.VITE_RPC_URL || 'https://soroban-testnet.stellar.org';
+export const HORIZON_URL = (import.meta as any).env.VITE_HORIZON_URL || 'https://horizon-testnet.stellar.org';
+export const NETWORK_PASSPHRASE = (import.meta as any).env.VITE_NETWORK_PASSPHRASE || Networks.TESTNET;
 
 export const rpcServer = new rpc.Server(RPC_URL);
 export const horizonServer = new Horizon.Server(HORIZON_URL);
