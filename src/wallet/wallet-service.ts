@@ -1,4 +1,4 @@
-import albedo from 'albedo';
+import albedo from '@albedo-link/intent';
 import { isConnected as checkFreighter, getAddress, signTransaction as signFreighterTransaction } from '@stellar/freighter-api';
 import { Networks } from '@stellar/stellar-sdk';
 

@@ -1,1 +1,1 @@
-declare module 'albedo';
+declare module '@albedo-link/intent';
