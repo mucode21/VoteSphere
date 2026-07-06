@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>VoteSphere - Governance Analytics</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400..700&amp;family=Montserrat+Alternates:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-container": "#fffbff",
+                        "secondary": "#735c00",
+                        "primary-fixed-dim": "#f7bd48",
+                        "on-primary": "#ffffff",
+                        "on-tertiary-container": "#fffbff",
+                        "outline-variant": "#d3c4af",
+                        "surface-container-low": "#f5f3ee",
+                        "primary-fixed": "#ffdea6",
+                        "surface": "#fbf9f4",
+                        "tertiary-fixed": "#f0e1c1",
+                        "on-tertiary": "#ffffff",
+                        "error": "#ba1a1a",
+                        "on-primary-fixed": "#271900",
+                        "outline": "#817563",
+                        "inverse-surface": "#30312e",
+                        "on-surface": "#1b1c19",
+                        "on-secondary-container": "#745c00",
+                        "on-surface-variant": "#4f4535",
+                        "tertiary": "#655b42",
+                        "on-tertiary-fixed": "#221b07",
+                        "primary-container": "#986d00",
+                        "on-background": "#1b1c19",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-dim": "#dbdad5",
+                        "secondary-container": "#fed65b",
+                        "surface-container-highest": "#e4e2dd",
+                        "surface-variant": "#e4e2dd",
+                        "tertiary-container": "#7f7459",
+                        "surface-tint": "#7b5800",
+                        "on-secondary-fixed-variant": "#574500",
+                        "surface-bright": "#fbf9f4",
+                        "on-primary-fixed-variant": "#5d4200",
+                        "on-secondary-fixed": "#241a00",
+                        "tertiary-fixed-dim": "#d3c5a7",
+                        "inverse-on-surface": "#f2f1ec",
+                        "on-error-container": "#93000a",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-fixed-variant": "#4f462f",
+                        "error-container": "#ffdad6",
+                        "primary": "#785600",
+                        "on-error": "#ffffff",
+                        "secondary-fixed-dim": "#e9c349",
+                        "inverse-primary": "#f7bd48",
+                        "surface-container-high": "#eae8e3",
+                        "background": "#fbf9f4",
+                        "surface-container": "#f0eee9",
+                        "secondary-fixed": "#ffe088"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "container-max": "1200px",
+                        "margin-mobile": "20px",
+                        "unit": "8px",
+                        "margin-desktop": "64px",
+                        "gutter": "24px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Dancing Script"],
+                        "display-lg": ["Dancing Script"],
+                        "label-md": ["Montserrat Alternates"],
+                        "display-lg-mobile": ["Dancing Script"],
+                        "label-sm": ["Montserrat Alternates"],
+                        "body-lg": ["Montserrat Alternates"],
+                        "headline-sm": ["Dancing Script"],
+                        "body-md": ["Montserrat Alternates"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["32px", { "lineHeight": "1.3", "fontWeight": "600" }],
+                        "display-lg": ["48px", { "lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "label-md": ["14px", { "lineHeight": "1.2", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "display-lg-mobile": ["36px", { "lineHeight": "1.2", "fontWeight": "700" }],
+                        "label-sm": ["12px", { "lineHeight": "1.2", "letterSpacing": "0.03em", "fontWeight": "500" }],
+                        "body-lg": ["18px", { "lineHeight": "1.6", "letterSpacing": "0.01em", "fontWeight": "400" }],
+                        "headline-sm": ["24px", { "lineHeight": "1.4", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "1.6", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .vellum-card {
+            background-color: #ffffff;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            box-shadow: 0 30px 60px -15px rgba(212, 175, 55, 0.05);
+        }
+        .hairline-divider {
+            border-bottom: 0.5px solid #655b42; /* tertiary color */
+        }
+        .btn-primary {
+            background-color: #B8860B;
+            color: #ffffff;
+            text-transform: uppercase;
+        }
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body-md min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<header class="bg-surface dark:bg-inverse-surface border-b border-outline-variant/30 dark:border-outline/20 flat no shadows sticky top-0 z-50 w-full transition-transform duration-200">
+<div class="flex justify-between items-center px-margin-desktop py-4 max-w-container-max mx-auto md:px-margin-desktop px-margin-mobile">
+<div class="flex items-center gap-4">
+<span class="font-display-lg text-display-lg text-primary dark:text-primary-fixed-dim hidden md:block">VoteSphere</span>
+<span class="font-display-lg-mobile text-display-lg-mobile text-primary dark:text-primary-fixed-dim md:hidden">VoteSphere</span>
+</div>
+<nav class="hidden md:flex items-center gap-6">
+<a class="font-body-md text-body-md text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed-dim hover:opacity-80 transition-opacity transition-colors" href="#">Features</a>
+<a class="font-body-md text-body-md text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed-dim hover:opacity-80 transition-opacity transition-colors" href="#">Elections</a>
+<a class="font-body-md text-body-md text-primary dark:text-primary-fixed-dim border-b-2 border-primary dark:border-primary-fixed-dim pb-1 hover:opacity-80 transition-opacity transition-colors" href="#">Governance</a>
+<a class="font-body-md text-body-md text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed-dim hover:opacity-80 transition-opacity transition-colors" href="#">Dashboard</a>
+<a class="font-body-md text-body-md text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed-dim hover:opacity-80 transition-opacity transition-colors" href="#">Documentation</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-primary hover:opacity-80 transition-opacity" data-icon="dark_mode">dark_mode</button>
+<button class="btn-primary font-label-md text-label-md px-6 py-2 rounded-DEFAULT transition-all">Connect Wallet</button>
+</div>
+</div>
+</header>
+<!-- Main Content -->
+<main class="flex-grow py-margin-desktop px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto w-full">
+<!-- Header Section -->
+<div class="mb-12 flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-outline-variant/30 pb-6">
+<div>
+<h1 class="font-display-lg text-display-lg text-on-surface mb-2 hidden md:block">Protocol Upgrade Proposal v4.2</h1>
+<h1 class="font-display-lg-mobile text-display-lg-mobile text-on-surface mb-2 md:hidden">Protocol Upgrade Proposal v4.2</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Active Governance Event • Initiated Block #1849201</p>
+</div>
+<div class="flex gap-4">
+<div class="bg-[#f7bd48] text-[#271900] font-label-sm text-label-sm px-3 py-1 rounded-full border border-[#d4af37] flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-error animate-pulse"></span>
+                    Live Voting
+                </div>
+</div>
+</div>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-gutter">
+<!-- Stats Column (Left) -->
+<div class="md:col-span-4 flex flex-col gap-gutter">
+<!-- Time Remaining Card -->
+<div class="vellum-card rounded-xl p-8 flex flex-col justify-center items-center text-center">
+<span class="material-symbols-outlined text-primary text-4xl mb-4" data-icon="hourglass_empty">hourglass_empty</span>
+<h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-widest mb-2">Time Remaining</h3>
+<div class="font-headline-md text-headline-md text-on-surface">48h 12m 04s</div>
+</div>
+<!-- Total Quorum Card -->
+<div class="vellum-card rounded-xl p-8 flex flex-col justify-center items-center text-center">
+<span class="material-symbols-outlined text-primary text-4xl mb-4" data-icon="account_balance">account_balance</span>
+<h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-widest mb-2">Total Quorum</h3>
+<div class="font-headline-md text-headline-md text-on-surface">42.5M VP</div>
+<div class="w-full bg-surface-container-highest rounded-full h-1 mt-4">
+<div class="bg-primary h-1 rounded-full" style="width: 75%"></div>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-2">75% of Required Quorum Reached</p>
+</div>
+</div>
+<!-- Charts Column (Right) -->
+<div class="md:col-span-8 flex flex-col gap-gutter">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-gutter h-full">
+<!-- Vote Distribution Donut Chart -->
+<div class="vellum-card rounded-xl p-8 flex flex-col">
+<h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-widest mb-6 border-b border-outline-variant/30 pb-2">Vote Distribution</h3>
+<div class="flex-grow relative min-h-[250px] flex justify-center items-center">
+<canvas id="voteDistributionChart"></canvas>
+</div>
+</div>
+<!-- Participation Velocity Area Chart -->
+<div class="vellum-card rounded-xl p-8 flex flex-col">
+<h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-widest mb-6 border-b border-outline-variant/30 pb-2">Participation Velocity</h3>
+<div class="flex-grow relative min-h-[250px] flex justify-center items-center">
+<canvas id="participationChart"></canvas>
+</div>
+</div>
+</div>
+</div>
+<!-- Recent Transactions List (Full Width) -->
+<div class="md:col-span-12 vellum-card rounded-xl p-8 mt-gutter">
+<div class="flex justify-between items-center mb-6 border-b border-outline-variant/30 pb-4">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Recent Governance Transactions</h3>
+<button class="font-label-md text-label-md text-primary hover:text-primary-container transition-colors">View All Ledger Entries</button>
+</div>
+<div class="w-full overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest hairline-divider">
+<th class="py-4 px-2 font-normal">Voter Identity (Address)</th>
+<th class="py-4 px-2 font-normal">Action</th>
+<th class="py-4 px-2 font-normal text-right">Voting Power (Weight)</th>
+<th class="py-4 px-2 font-normal text-right">Timestamp</th>
+</tr>
+</thead>
+<tbody class="font-body-md text-body-md text-on-surface">
+<tr class="hover:bg-surface-container-low transition-colors hairline-divider">
+<td class="py-4 px-2 font-mono text-sm">0x71C...976F</td>
+<td class="py-4 px-2"><span class="bg-[#f0e1c1] text-[#221b07] px-2 py-1 rounded text-xs font-semibold">FOR</span></td>
+<td class="py-4 px-2 text-right">1,250,000 VP</td>
+<td class="py-4 px-2 text-right text-on-surface-variant text-sm">2 mins ago</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors hairline-divider">
+<td class="py-4 px-2 font-mono text-sm">0x44A...12B9</td>
+<td class="py-4 px-2"><span class="bg-surface-variant text-on-surface-variant px-2 py-1 rounded text-xs font-semibold">ABSTAIN</span></td>
+<td class="py-4 px-2 text-right">450,000 VP</td>
+<td class="py-4 px-2 text-right text-on-surface-variant text-sm">15 mins ago</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors hairline-divider">
+<td class="py-4 px-2 font-mono text-sm">0x99F...33E1</td>
+<td class="py-4 px-2"><span class="bg-error-container text-on-error-container px-2 py-1 rounded text-xs font-semibold">AGAINST</span></td>
+<td class="py-4 px-2 text-right">890,500 VP</td>
+<td class="py-4 px-2 text-right text-on-surface-variant text-sm">42 mins ago</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors hairline-divider">
+<td class="py-4 px-2 font-mono text-sm">0x112...00AA</td>
+<td class="py-4 px-2"><span class="bg-[#f0e1c1] text-[#221b07] px-2 py-1 rounded text-xs font-semibold">FOR</span></td>
+<td class="py-4 px-2 text-right">2,100,000 VP</td>
+<td class="py-4 px-2 text-right text-on-surface-variant text-sm">1 hr ago</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-4 px-2 font-mono text-sm">0x8B3...77CC</td>
+<td class="py-4 px-2"><span class="bg-[#f0e1c1] text-[#221b07] px-2 py-1 rounded text-xs font-semibold">FOR</span></td>
+<td class="py-4 px-2 text-right">150,000 VP</td>
+<td class="py-4 px-2 text-right text-on-surface-variant text-sm">1.5 hrs ago</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="bg-surface-container dark:bg-surface-container-low border-t border-outline-variant/30 dark:border-outline/20 flat no shadows full-width mt-auto">
+<div class="flex flex-col md:flex-row justify-between items-center px-margin-desktop py-unit-gutter max-w-container-max mx-auto md:px-margin-desktop px-margin-mobile gap-6">
+<div class="font-headline-sm text-headline-sm text-primary dark:text-primary-fixed-dim">
+                VoteSphere
+            </div>
+<div class="font-body-md text-body-md text-secondary dark:text-secondary-fixed-dim text-center md:text-left">
+                © 2024 VoteSphere. Secured by Heritage Ledger Protocol.
+            </div>
+<nav class="flex flex-wrap justify-center gap-4">
+<a class="font-body-md text-body-md text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed-dim transition-colors" href="#">Privacy Policy</a>
+<a class="font-body-md text-body-md text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed-dim transition-colors" href="#">Terms of Service</a>
+<a class="font-body-md text-body-md text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed-dim transition-colors" href="#">Security Audit</a>
+<a class="font-body-md text-body-md text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed-dim transition-colors" href="#">Contact Support</a>
+</nav>
+</div>
+</footer>
+<script>
+        // Chart.js Configuration
+        document.addEventListener('DOMContentLoaded', function() {
+            // Colors from theme
+            const colors = {
+                primary: '#785600',
+                secondary: '#735c00',
+                tertiary: '#655b42',
+                error: '#ba1a1a',
+                surfaceVariant: '#e4e2dd',
+                text: '#1b1c19',
+                grid: 'rgba(211, 196, 175, 0.3)' // outline-variant/30
+            };
+
+            Chart.defaults.font.family = "'Montserrat Alternates', sans-serif";
+            Chart.defaults.color = colors.text;
+
+            // Vote Distribution Donut Chart
+            const ctxDonut = document.getElementById('voteDistributionChart').getContext('2d');
+            new Chart(ctxDonut, {
+                type: 'doughnut',
+                data: {
+                    labels: ['For', 'Against', 'Abstain'],
+                    datasets: [{
+                        data: [65, 20, 15],
+                        backgroundColor: [
+                            colors.primary,
+                            colors.error,
+                            colors.surfaceVariant
+                        ],
+                        borderWidth: 1,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '75%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true,
+                                pointStyle: 'circle'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Participation Velocity Area Chart
+            const ctxArea = document.getElementById('participationChart').getContext('2d');
+            
+            // Create gradient
+            let gradient = ctxArea.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, 'rgba(120, 86, 0, 0.2)'); // primary color with opacity
+            gradient.addColorStop(1, 'rgba(120, 86, 0, 0)');
+
+            new Chart(ctxArea, {
+                type: 'line',
+                data: {
+                    labels: ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5'],
+                    datasets: [{
+                        label: 'Votes Cast',
+                        data: [5, 15, 25, 22, 42],
+                        fill: true,
+                        backgroundColor: gradient,
+                        borderColor: colors.primary,
+                        borderWidth: 2,
+                        tension: 0.4,
+                        pointBackgroundColor: '#ffffff',
+                        pointBorderColor: colors.primary,
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: colors.grid,
+                                drawBorder: false
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body></html>

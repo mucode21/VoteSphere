@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>VoteSphere - Election Admin Wizard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400..700&amp;family=Montserrat+Alternates:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-primary-container": "#fffbff",
+                        "secondary": "#735c00",
+                        "primary-fixed-dim": "#f7bd48",
+                        "on-primary": "#ffffff",
+                        "on-tertiary-container": "#fffbff",
+                        "outline-variant": "#d3c4af",
+                        "surface-container-low": "#f5f3ee",
+                        "primary-fixed": "#ffdea6",
+                        "surface": "#fbf9f4",
+                        "tertiary-fixed": "#f0e1c1",
+                        "on-tertiary": "#ffffff",
+                        "error": "#ba1a1a",
+                        "on-primary-fixed": "#271900",
+                        "outline": "#817563",
+                        "inverse-surface": "#30312e",
+                        "on-surface": "#1b1c19",
+                        "on-secondary-container": "#745c00",
+                        "on-surface-variant": "#4f4535",
+                        "tertiary": "#655b42",
+                        "on-tertiary-fixed": "#221b07",
+                        "primary-container": "#986d00",
+                        "on-background": "#1b1c19",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-dim": "#dbdad5",
+                        "secondary-container": "#fed65b",
+                        "surface-container-highest": "#e4e2dd",
+                        "surface-variant": "#e4e2dd",
+                        "tertiary-container": "#7f7459",
+                        "surface-tint": "#7b5800",
+                        "on-secondary-fixed-variant": "#574500",
+                        "surface-bright": "#fbf9f4",
+                        "on-primary-fixed-variant": "#5d4200",
+                        "on-secondary-fixed": "#241a00",
+                        "tertiary-fixed-dim": "#d3c5a7",
+                        "inverse-on-surface": "#f2f1ec",
+                        "on-error-container": "#93000a",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-fixed-variant": "#4f462f",
+                        "error-container": "#ffdad6",
+                        "primary": "#785600",
+                        "on-error": "#ffffff",
+                        "secondary-fixed-dim": "#e9c349",
+                        "inverse-primary": "#f7bd48",
+                        "surface-container-high": "#eae8e3",
+                        "background": "#fbf9f4",
+                        "surface-container": "#f0eee9",
+                        "secondary-fixed": "#ffe088"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    spacing: {
+                        "container-max": "1200px",
+                        "margin-mobile": "20px",
+                        "unit": "8px",
+                        "margin-desktop": "64px",
+                        "gutter": "24px"
+                    },
+                    fontFamily: {
+                        "headline-md": ["Dancing Script"],
+                        "display-lg": ["Dancing Script"],
+                        "label-md": ["Montserrat Alternates"],
+                        "display-lg-mobile": ["Dancing Script"],
+                        "label-sm": ["Montserrat Alternates"],
+                        "body-lg": ["Montserrat Alternates"],
+                        "headline-sm": ["Dancing Script"],
+                        "body-md": ["Montserrat Alternates"]
+                    },
+                    fontSize: {
+                        "headline-md": ["32px", { lineHeight: "1.3", fontWeight: "600" }],
+                        "display-lg": ["48px", { lineHeight: "1.2", letterSpacing: "-0.01em", fontWeight: "700" }],
+                        "label-md": ["14px", { lineHeight: "1.2", letterSpacing: "0.05em", fontWeight: "600" }],
+                        "display-lg-mobile": ["36px", { lineHeight: "1.2", fontWeight: "700" }],
+                        "label-sm": ["12px", { lineHeight: "1.2", letterSpacing: "0.03em", fontWeight: "500" }],
+                        "body-lg": ["18px", { lineHeight: "1.6", letterSpacing: "0.01em", fontWeight: "400" }],
+                        "headline-sm": ["24px", { lineHeight: "1.4", fontWeight: "600" }],
+                        "body-md": ["16px", { lineHeight: "1.6", fontWeight: "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: theme('colors.background');
+            color: theme('colors.on-background');
+        }
+        
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        
+        .nav-active {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .vellum-card {
+            background-color: theme('colors.surface-container-lowest');
+            border: 1px solid rgba(212, 175, 55, 0.3); /* D4AF37 eq to roughly tertiary/outline */
+            box-shadow: 0 4px 30px rgba(184, 134, 11, 0.05);
+        }
+
+        .input-ledger {
+            border: none;
+            border-bottom: 1px solid theme('colors.outline');
+            background-color: transparent;
+            border-radius: 0;
+            padding-left: 0;
+            padding-right: 0;
+        }
+        
+        .input-ledger:focus {
+            outline: none;
+            box-shadow: none;
+            border-bottom: 2px solid theme('colors.primary');
+        }
+
+        .btn-primary {
+            background-color: #B8860B; /* Golden color from guidelines */
+            color: white;
+            text-transform: uppercase;
+        }
+        
+        .btn-ghost {
+            border: 1px solid #B8860B;
+            color: #B8860B;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col font-body-md antialiased">
+<!-- TopNavBar (Nav suppressed due to wizard/transactional intent, keeping only brand anchor if needed, but per rule: suppress nav shell on transactional. We will create a simplified header for the wizard instead of the full global nav) -->
+<header class="w-full border-b border-outline-variant/30 py-4 px-margin-desktop">
+<div class="max-w-container-max mx-auto flex justify-between items-center">
+<div class="font-display-lg text-display-lg text-primary">
+                VoteSphere
+            </div>
+<button class="text-on-surface-variant flex items-center gap-2 hover:text-primary transition-colors font-label-md text-label-md">
+<span class="material-symbols-outlined">close</span>
+                EXIT WIZARD
+            </button>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-grow w-full max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-12 flex flex-col md:flex-row gap-gutter">
+<!-- Sidebar: Progress -->
+<aside class="w-full md:w-1/4 shrink-0">
+<div class="sticky top-12">
+<h2 class="font-headline-sm text-headline-sm text-on-surface mb-8">Election Setup</h2>
+<nav class="relative">
+<!-- Connecting line -->
+<div class="absolute left-4 top-4 bottom-4 w-px bg-outline-variant/50 z-0"></div>
+<ul class="relative z-10 flex flex-col gap-6">
+<!-- Step 1: Active -->
+<li class="flex items-start gap-4 group cursor-pointer">
+<div class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center font-label-sm text-label-sm shadow-sm ring-4 ring-background">
+                                1
+                            </div>
+<div class="pt-1">
+<span class="block font-label-md text-label-md text-primary font-bold">Basic Information</span>
+<span class="block font-label-sm text-label-sm text-on-surface-variant mt-1">Title &amp; Description</span>
+</div>
+</li>
+<!-- Step 2: Inactive -->
+<li class="flex items-start gap-4 group cursor-pointer opacity-70 hover:opacity-100 transition-opacity">
+<div class="w-8 h-8 rounded-full bg-surface-container-high border border-outline text-on-surface flex items-center justify-center font-label-sm text-label-sm ring-4 ring-background transition-colors group-hover:border-primary">
+                                2
+                            </div>
+<div class="pt-1">
+<span class="block font-label-md text-label-md text-on-surface">Candidates</span>
+<span class="block font-label-sm text-label-sm text-on-surface-variant mt-1">Nominees &amp; Options</span>
+</div>
+</li>
+<!-- Step 3: Inactive -->
+<li class="flex items-start gap-4 group cursor-pointer opacity-70 hover:opacity-100 transition-opacity">
+<div class="w-8 h-8 rounded-full bg-surface-container-high border border-outline text-on-surface flex items-center justify-center font-label-sm text-label-sm ring-4 ring-background transition-colors group-hover:border-primary">
+                                3
+                            </div>
+<div class="pt-1">
+<span class="block font-label-md text-label-md text-on-surface">Rules</span>
+<span class="block font-label-sm text-label-sm text-on-surface-variant mt-1">Voting mechanics</span>
+</div>
+</li>
+<!-- Step 4: Inactive -->
+<li class="flex items-start gap-4 group cursor-pointer opacity-70 hover:opacity-100 transition-opacity">
+<div class="w-8 h-8 rounded-full bg-surface-container-high border border-outline text-on-surface flex items-center justify-center font-label-sm text-label-sm ring-4 ring-background transition-colors group-hover:border-primary">
+                                4
+                            </div>
+<div class="pt-1">
+<span class="block font-label-md text-label-md text-on-surface">Schedule</span>
+<span class="block font-label-sm text-label-sm text-on-surface-variant mt-1">Timeline &amp; Deadlines</span>
+</div>
+</li>
+<!-- Step 5: Inactive -->
+<li class="flex items-start gap-4 group cursor-pointer opacity-70 hover:opacity-100 transition-opacity">
+<div class="w-8 h-8 rounded-full bg-surface-container-high border border-outline text-on-surface flex items-center justify-center font-label-sm text-label-sm ring-4 ring-background transition-colors group-hover:border-primary">
+                                5
+                            </div>
+<div class="pt-1">
+<span class="block font-label-md text-label-md text-on-surface">Review &amp; Publish</span>
+<span class="block font-label-sm text-label-sm text-on-surface-variant mt-1">Final confirmation</span>
+</div>
+</li>
+</ul>
+</nav>
+</div>
+</aside>
+<!-- Main Form Area -->
+<div class="w-full md:w-3/4">
+<div class="vellum-card p-8 md:p-12 rounded-lg">
+<div class="mb-10">
+<h1 class="font-headline-md text-headline-md text-on-surface mb-2">Step 1: Basic Information</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Define the core identity of this election or proposal on the ledger.</p>
+</div>
+<form class="space-y-10">
+<!-- Proposal Title -->
+<div class="space-y-2 relative">
+<label class="block font-label-md text-label-md text-on-surface" for="title">Proposal Title</label>
+<input class="input-ledger w-full font-body-lg text-body-lg text-on-surface placeholder:text-outline-variant/70 pb-2" id="title" name="title" placeholder="e.g., Q3 Board of Directors Election" type="text"/>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-1 absolute right-0 -bottom-6">0 / 120</p>
+</div>
+<!-- Internal Reference ID -->
+<div class="space-y-2">
+<label class="block font-label-md text-label-md text-on-surface" for="refId">Internal Reference ID</label>
+<div class="flex items-center">
+<span class="font-body-md text-body-md text-outline mr-2">VS-</span>
+<input class="input-ledger w-full max-w-[200px] font-body-md text-body-md text-on-surface placeholder:text-outline-variant/70 pb-1" id="refId" name="refId" placeholder="2024-BOD-01" type="text"/>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-1">Unique identifier for institutional record-keeping.</p>
+</div>
+<!-- Detailed Description -->
+<div class="space-y-2 pt-4">
+<div class="flex justify-between items-end mb-2">
+<label class="block font-label-md text-label-md text-on-surface" for="description">Detailed Description</label>
+<span class="font-label-sm text-label-sm bg-surface-container text-on-surface-variant px-2 py-1 rounded">Markdown Supported</span>
+</div>
+<div class="border border-outline-variant/50 rounded p-1 bg-surface-container-lowest focus-within:border-primary transition-colors">
+<!-- Minimal WYSIWYG Toolbar metaphor -->
+<div class="flex gap-2 p-2 border-b border-outline-variant/30 text-on-surface-variant">
+<button class="p-1 hover:text-primary hover:bg-surface-container rounded transition-colors" type="button"><span class="material-symbols-outlined text-[18px]">format_bold</span></button>
+<button class="p-1 hover:text-primary hover:bg-surface-container rounded transition-colors" type="button"><span class="material-symbols-outlined text-[18px]">format_italic</span></button>
+<div class="w-px bg-outline-variant/30 my-1"></div>
+<button class="p-1 hover:text-primary hover:bg-surface-container rounded transition-colors" type="button"><span class="material-symbols-outlined text-[18px]">format_list_bulleted</span></button>
+<button class="p-1 hover:text-primary hover:bg-surface-container rounded transition-colors" type="button"><span class="material-symbols-outlined text-[18px]">link</span></button>
+</div>
+<textarea class="w-full border-none bg-transparent font-body-md text-body-md text-on-surface placeholder:text-outline-variant/70 focus:ring-0 resize-y p-4" id="description" name="description" placeholder="Provide full context, mandates, and requirements for this proposal..." rows="8"></textarea>
+</div>
+</div>
+<!-- Action Buttons -->
+<div class="flex justify-between items-center pt-8 border-t border-outline-variant/30">
+<button class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-colors" type="button">
+                            SAVE DRAFT
+                        </button>
+<div class="flex gap-4">
+<button class="btn-ghost px-6 py-3 rounded font-label-md text-label-md transition-colors hover:bg-surface-container-low" type="button">
+                                CANCEL
+                            </button>
+<button class="btn-primary px-8 py-3 rounded font-label-md text-label-md shadow-sm hover:opacity-90 transition-opacity flex items-center gap-2" type="button">
+                                NEXT: CANDIDATES
+                                <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</div>
+</div>
+</form>
+</div>
+</div>
+</main>
+<!-- Footer (Suppressed on transactional/wizard screen per guidelines to maintain focus) -->
+</body></html>

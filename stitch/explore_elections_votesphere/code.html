@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>VoteSphere - Active Elections</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&amp;family=Montserrat+Alternates:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-container": "#fffbff",
+                        "secondary": "#735c00",
+                        "primary-fixed-dim": "#f7bd48",
+                        "on-primary": "#ffffff",
+                        "on-tertiary-container": "#fffbff",
+                        "outline-variant": "#d3c4af",
+                        "surface-container-low": "#f5f3ee",
+                        "primary-fixed": "#ffdea6",
+                        "surface": "#fbf9f4",
+                        "tertiary-fixed": "#f0e1c1",
+                        "on-tertiary": "#ffffff",
+                        "error": "#ba1a1a",
+                        "on-primary-fixed": "#271900",
+                        "outline": "#817563",
+                        "inverse-surface": "#30312e",
+                        "on-surface": "#1b1c19",
+                        "on-secondary-container": "#745c00",
+                        "on-surface-variant": "#4f4535",
+                        "tertiary": "#655b42",
+                        "on-tertiary-fixed": "#221b07",
+                        "primary-container": "#986d00",
+                        "on-background": "#1b1c19",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-dim": "#dbdad5",
+                        "secondary-container": "#fed65b",
+                        "surface-container-highest": "#e4e2dd",
+                        "surface-variant": "#e4e2dd",
+                        "tertiary-container": "#7f7459",
+                        "surface-tint": "#7b5800",
+                        "on-secondary-fixed-variant": "#574500",
+                        "surface-bright": "#fbf9f4",
+                        "on-primary-fixed-variant": "#5d4200",
+                        "on-secondary-fixed": "#241a00",
+                        "tertiary-fixed-dim": "#d3c5a7",
+                        "inverse-on-surface": "#f2f1ec",
+                        "on-error-container": "#93000a",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-fixed-variant": "#4f462f",
+                        "error-container": "#ffdad6",
+                        "primary": "#785600",
+                        "on-error": "#ffffff",
+                        "secondary-fixed-dim": "#e9c349",
+                        "inverse-primary": "#f7bd48",
+                        "surface-container-high": "#eae8e3",
+                        "background": "#fbf9f4",
+                        "surface-container": "#f0eee9",
+                        "secondary-fixed": "#ffe088"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "container-max": "1200px",
+                        "margin-mobile": "20px",
+                        "unit": "8px",
+                        "margin-desktop": "64px",
+                        "gutter": "24px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Dancing Script"],
+                        "display-lg": ["Dancing Script"],
+                        "label-md": ["Montserrat Alternates"],
+                        "display-lg-mobile": ["Dancing Script"],
+                        "label-sm": ["Montserrat Alternates"],
+                        "body-lg": ["Montserrat Alternates"],
+                        "headline-sm": ["Dancing Script"],
+                        "body-md": ["Montserrat Alternates"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["32px", { "lineHeight": "1.3", "fontWeight": "600" }],
+                        "display-lg": ["48px", { "lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "label-md": ["14px", { "lineHeight": "1.2", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "display-lg-mobile": ["36px", { "lineHeight": "1.2", "fontWeight": "700" }],
+                        "label-sm": ["12px", { "lineHeight": "1.2", "letterSpacing": "0.03em", "fontWeight": "500" }],
+                        "body-lg": ["18px", { "lineHeight": "1.6", "letterSpacing": "0.01em", "fontWeight": "400" }],
+                        "headline-sm": ["24px", { "lineHeight": "1.4", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "1.6", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined[style*="'FILL' 1"] {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md text-body-md min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<header class="bg-surface docked full-width top-0 border-b border-outline-variant/30 hidden md:block">
+<div class="flex justify-between items-center px-margin-desktop py-4 max-w-container-max mx-auto">
+<div class="font-display-lg text-display-lg text-primary">VoteSphere</div>
+<nav class="flex gap-gutter">
+<a class="text-on-surface-variant hover:text-primary hover:opacity-80 transition-opacity" href="#">Features</a>
+<a class="text-primary border-b-2 border-primary pb-1 hover:opacity-80 transition-opacity" href="#" onmousedown="this.style.transform='scale(0.95)'" onmouseleave="this.style.transform='scale(1)'" onmouseup="this.style.transform='scale(1)'" style="transform-origin: center; transition: transform 0.2s;">Elections</a>
+<a class="text-on-surface-variant hover:text-primary hover:opacity-80 transition-opacity" href="#">Governance</a>
+<a class="text-on-surface-variant hover:text-primary hover:opacity-80 transition-opacity" href="#">Dashboard</a>
+<a class="text-on-surface-variant hover:text-primary hover:opacity-80 transition-opacity" href="#">Documentation</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="bg-primary-container text-on-primary-container font-label-md text-label-md uppercase px-4 py-2 rounded uppercase tracking-wider hover:opacity-80 transition-opacity">Connect Wallet</button>
+<button class="text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined" data-icon="dark_mode">dark_mode</span></button>
+</div>
+</div>
+</header>
+<!-- Mobile Header (Simplified) -->
+<header class="md:hidden bg-surface border-b border-outline-variant/30 py-4 px-margin-mobile flex justify-between items-center sticky top-0 z-50">
+<div class="font-display-lg-mobile text-display-lg-mobile text-primary">VoteSphere</div>
+<button class="text-on-surface-variant"><span class="material-symbols-outlined">menu</span></button>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-grow max-w-container-max mx-auto w-full px-margin-mobile md:px-margin-desktop py-8 md:py-16">
+<!-- Page Header & Actions -->
+<div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
+<div>
+<h1 class="font-display-lg text-display-lg text-primary mb-2 md:hidden">Active Elections</h1>
+<h1 class="font-display-lg text-display-lg text-primary mb-2 hidden md:block">Active Elections</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">Participate in shaping the future. Browse ongoing governance proposals and cast your vote on-chain.</p>
+</div>
+<div class="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
+<div class="relative w-full sm:w-64">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="w-full bg-surface-container-low border-b border-outline focus:border-b-2 focus:border-primary-container focus:ring-0 pl-10 pr-4 py-2 font-body-md text-body-md text-on-surface placeholder:text-outline outline-none transition-colors" placeholder="Search proposals..." type="text"/>
+</div>
+<div class="flex gap-2 overflow-x-auto pb-2 sm:pb-0 hide-scrollbar">
+<button class="bg-primary-container text-on-primary-container font-label-sm text-label-sm px-4 py-2 rounded-full whitespace-nowrap">All Categories</button>
+<button class="bg-surface-container-low text-on-surface-variant border border-outline-variant/50 hover:bg-surface-container font-label-sm text-label-sm px-4 py-2 rounded-full whitespace-nowrap transition-colors">DAO</button>
+<button class="bg-surface-container-low text-on-surface-variant border border-outline-variant/50 hover:bg-surface-container font-label-sm text-label-sm px-4 py-2 rounded-full whitespace-nowrap transition-colors">Protocol</button>
+<button class="bg-surface-container-low text-on-surface-variant border border-outline-variant/50 hover:bg-surface-container font-label-sm text-label-sm px-4 py-2 rounded-full whitespace-nowrap transition-colors">Corporate</button>
+</div>
+</div>
+</div>
+<!-- Bento Grid / Asymmetric Layout for Elections -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-gutter">
+<!-- Featured / High Priority Election (Span 8 cols) -->
+<article class="md:col-span-8 bg-surface-container-lowest border border-outline-variant/30 rounded-lg p-6 md:p-8 flex flex-col justify-between relative overflow-hidden group">
+<div class="absolute inset-0 bg-gradient-to-br from-surface-container-lowest to-surface-container-low opacity-50 z-0"></div>
+<div class="relative z-10">
+<div class="flex justify-between items-start mb-6">
+<span class="bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm px-3 py-1 rounded-full flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">account_balance</span> Protocol
+                        </span>
+<div class="flex items-center gap-2 text-primary">
+<span class="material-symbols-outlined" data-weight="fill" style="font-variation-settings: 'FILL' 1;">timer</span>
+<span class="font-label-md text-label-md">2d 14h left</span>
+</div>
+</div>
+<h2 class="font-headline-md text-headline-md text-on-surface mb-4 group-hover:text-primary transition-colors">Treasury Diversification Q3</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mb-8 max-w-xl">Proposal to allocate 15% of the protocol treasury to real-world assets (RWA) to hedge against crypto market volatility and ensure long-term sustainability of the governance token.</p>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+<div>
+<p class="font-label-sm text-label-sm text-outline uppercase tracking-wider mb-1">Status</p>
+<p class="font-label-md text-label-md text-on-surface flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-primary-container inline-block"></span> Active</p>
+</div>
+<div>
+<p class="font-label-sm text-label-sm text-outline uppercase tracking-wider mb-1">Participation</p>
+<p class="font-label-md text-label-md text-on-surface">14,250 Wallets</p>
+</div>
+<div class="col-span-2">
+<p class="font-label-sm text-label-sm text-outline uppercase tracking-wider mb-1">Quorum Progress</p>
+<div class="w-full bg-surface-variant rounded-full h-1.5 mt-2">
+<div class="bg-primary h-1.5 rounded-full" style="width: 85%"></div>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-1 text-right">85% Reached</p>
+</div>
+</div>
+</div>
+<div class="relative z-10 border-t border-outline-variant/30 pt-6 flex justify-between items-center">
+<div class="flex -space-x-2">
+<div class="w-8 h-8 rounded-full border-2 border-surface-container-lowest bg-surface-variant flex items-center justify-center text-xs">0x1...</div>
+<div class="w-8 h-8 rounded-full border-2 border-surface-container-lowest bg-surface-dim flex items-center justify-center text-xs">0x8...</div>
+<div class="w-8 h-8 rounded-full border-2 border-surface-container-lowest bg-outline-variant flex items-center justify-center text-xs">+4k</div>
+</div>
+<button class="bg-primary text-on-primary font-label-md text-label-md uppercase px-6 py-3 hover:bg-primary-container transition-colors shadow-sm">Review &amp; Vote</button>
+</div>
+</article>
+<!-- Secondary Election 1 (Span 4 cols) -->
+<article class="md:col-span-4 bg-surface-container-lowest border border-outline-variant/30 p-6 flex flex-col justify-between hover:border-primary/50 transition-colors">
+<div>
+<div class="flex justify-between items-start mb-4">
+<span class="bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm px-3 py-1 rounded-full">DAO</span>
+<span class="font-label-sm text-label-sm text-outline">Ends in 5h</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-3 line-clamp-2">Stellar Consensus Protocol Enhancement v2.4</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-6 text-sm line-clamp-3">Technical upgrade to improve transaction throughput and reduce latency for cross-border consensus node validation.</p>
+</div>
+<div>
+<div class="flex justify-between text-sm mb-2">
+<span class="font-label-sm text-label-sm text-outline">Votes Cast</span>
+<span class="font-label-md text-label-md text-on-surface">8,920</span>
+</div>
+<div class="w-full bg-surface-variant rounded-full h-1 mb-6">
+<div class="bg-secondary h-1 rounded-full" style="width: 62%"></div>
+</div>
+<button class="w-full border border-primary text-primary hover:bg-primary/5 font-label-md text-label-md uppercase py-2 transition-colors">View Details</button>
+</div>
+</article>
+<!-- Secondary Election 2 (Span 4 cols) -->
+<article class="md:col-span-4 bg-surface-container-lowest border border-outline-variant/30 p-6 flex flex-col justify-between hover:border-primary/50 transition-colors">
+<div>
+<div class="flex justify-between items-start mb-4">
+<span class="bg-surface-variant text-on-surface-variant font-label-sm text-label-sm px-3 py-1 rounded-full">Corporate</span>
+<span class="font-label-sm text-label-sm text-outline">Starts in 2d</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-3 line-clamp-2">Board Member Election 2024</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-6 text-sm line-clamp-3">Annual election for the independent director seat. Review candidate profiles and historical voting records before casting your ballot.</p>
+</div>
+<div>
+<div class="flex justify-between text-sm mb-2">
+<span class="font-label-sm text-label-sm text-outline">Eligible Voters</span>
+<span class="font-label-md text-label-md text-on-surface">1,200</span>
+</div>
+<div class="w-full bg-surface-variant rounded-full h-1 mb-6">
+<div class="bg-surface-dim h-1 rounded-full" style="width: 0%"></div>
+</div>
+<button class="w-full text-primary font-label-md text-label-md uppercase py-2 hover:underline decoration-1 underline-offset-4">Read Manifestos</button>
+</div>
+</article>
+<!-- List View Style Item (Span 8 cols) -->
+<article class="md:col-span-8 bg-surface border-b border-outline-variant/30 py-6 hover:bg-surface-container-low transition-colors px-4 -mx-4 md:px-6 md:-mx-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+<div class="flex-grow">
+<div class="flex items-center gap-3 mb-1">
+<span class="bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm px-2 py-0.5 rounded">Protocol</span>
+<span class="font-label-sm text-label-sm text-primary flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-primary inline-block"></span> Voting Live</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-1">Grant Allocation: Q4 Developer Ecosystem</h3>
+<p class="font-body-md text-body-md text-on-surface-variant text-sm max-w-2xl truncate">Funding distribution for core infrastructure builders and community tool developers.</p>
+</div>
+<div class="flex items-center gap-6 w-full md:w-auto justify-between md:justify-end">
+<div class="text-right hidden sm:block">
+<p class="font-label-sm text-label-sm text-outline">Participation</p>
+<p class="font-label-md text-label-md text-on-surface">45%</p>
+</div>
+<div class="text-right">
+<p class="font-label-sm text-label-sm text-outline">Ends In</p>
+<p class="font-label-md text-label-md text-on-surface">5 Days</p>
+</div>
+<button class="border border-outline text-on-surface hover:border-primary hover:text-primary font-label-md text-label-md p-2 rounded-full transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined">arrow_forward</span>
+</button>
+</div>
+</article>
+<!-- List View Style Item (Span 8 cols) -->
+<article class="md:col-span-8 bg-surface border-b border-outline-variant/30 py-6 hover:bg-surface-container-low transition-colors px-4 -mx-4 md:px-6 md:-mx-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+<div class="flex-grow">
+<div class="flex items-center gap-3 mb-1">
+<span class="bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm px-2 py-0.5 rounded">DAO</span>
+<span class="font-label-sm text-label-sm text-outline flex items-center gap-1">Upcoming</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-1">Amend Constitution: Article IV Section 2</h3>
+<p class="font-body-md text-body-md text-on-surface-variant text-sm max-w-2xl truncate">Proposed changes to emergency pause parameters and multi-sig threshold requirements.</p>
+</div>
+<div class="flex items-center gap-6 w-full md:w-auto justify-between md:justify-end">
+<div class="text-right hidden sm:block">
+<p class="font-label-sm text-label-sm text-outline">Discussion</p>
+<p class="font-label-md text-label-md text-on-surface">128 Posts</p>
+</div>
+<div class="text-right">
+<p class="font-label-sm text-label-sm text-outline">Starts In</p>
+<p class="font-label-md text-label-md text-on-surface">1 Week</p>
+</div>
+<button class="border border-outline text-on-surface hover:border-primary hover:text-primary font-label-md text-label-md p-2 rounded-full transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined">arrow_forward</span>
+</button>
+</div>
+</article>
+</div>
+<!-- Pagination -->
+<div class="mt-12 flex justify-center items-center gap-2">
+<button class="w-10 h-10 flex items-center justify-center text-outline hover:text-primary disabled:opacity-50"><span class="material-symbols-outlined">chevron_left</span></button>
+<button class="w-10 h-10 flex items-center justify-center font-label-md text-label-md text-primary border-b-2 border-primary">1</button>
+<button class="w-10 h-10 flex items-center justify-center font-label-md text-label-md text-on-surface-variant hover:text-primary">2</button>
+<button class="w-10 h-10 flex items-center justify-center font-label-md text-label-md text-on-surface-variant hover:text-primary">3</button>
+<span class="text-outline">...</span>
+<button class="w-10 h-10 flex items-center justify-center text-outline hover:text-primary"><span class="material-symbols-outlined">chevron_right</span></button>
+</div>
+</main>
+<!-- Footer -->
+<footer class="bg-surface-container full-width border-t border-outline-variant/30 mt-auto">
+<div class="flex flex-col md:flex-row justify-between items-center px-margin-desktop py-unit-gutter max-w-container-max mx-auto py-8 gap-6 md:gap-0">
+<div class="font-headline-sm text-headline-sm text-primary">VoteSphere</div>
+<div class="font-body-md text-body-md text-secondary text-center md:text-left">© 2024 VoteSphere. Secured by Heritage Ledger Protocol.</div>
+<nav class="flex flex-wrap justify-center gap-4 md:gap-6">
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Privacy Policy</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Terms of Service</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Security Audit</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Contact Support</a>
+</nav>
+</div>
+</footer>
+</body></html>
