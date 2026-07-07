@@ -739,8 +739,8 @@ To log a valid interaction, users follow this sequence:
 4. **Share transaction hash**: Copy the hash of the interaction for validation.
 
 ### Verification Submission Links
-* **Google Form**: `REPLACE_WITH_GOOGLE_FORM_LINK`
-* **Google Sheet**: `REPLACE_WITH_GOOGLE_SHEET_LINK`
+* **Google Form**: [Community Feedback Form](https://forms.gle/NovTugHcdxL9fUJt8)
+* **Google Sheet**: [Validation Telemetry Responses](https://docs.google.com/spreadsheets/d/104Df7W42V21rpEsAAaygA4KvKor89UEZmpIa1ajxwkg/edit?usp=sharing)
 
 These verification channels validate that the system has been tested by 10+ real users.
 
