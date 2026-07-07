@@ -23,6 +23,7 @@ class EventStreamService {
   private lastLedger = 0;
   private timeoutId: any = null;
   private processedEventIds: Set<string> = new Set();
+  private currentPollSessionId = 0;
   
   // Resiliency and backoff config
   private consecutiveFailures = 0;
@@ -62,19 +63,21 @@ class EventStreamService {
   private startPolling() {
     if (this.polling) return;
     this.polling = true;
-    this.poll();
+    this.currentPollSessionId++;
+    this.poll(this.currentPollSessionId);
   }
 
-  private async poll() {
-    if (!this.polling) return;
+  private async poll(sessionId: number) {
+    if (!this.polling || this.currentPollSessionId !== sessionId) return;
 
     if (this.lastLedger === 0) {
       await this.init();
+      if (!this.polling || this.currentPollSessionId !== sessionId) return;
       if (this.lastLedger === 0) {
         // If still failed, schedule next try with backoff
         this.consecutiveFailures++;
         this.currentDelay = Math.min(this.baseDelay * Math.pow(2, this.consecutiveFailures), this.maxDelay);
-        this.timeoutId = setTimeout(() => this.poll(), this.currentDelay);
+        this.timeoutId = setTimeout(() => this.poll(sessionId), this.currentDelay);
         return;
       }
     }
@@ -90,6 +93,8 @@ class EventStreamService {
         ],
         limit: 100
       });
+
+      if (!this.polling || this.currentPollSessionId !== sessionId) return;
 
       // Reset backoff on successful request
       this.consecutiveFailures = 0;
@@ -121,6 +126,7 @@ class EventStreamService {
         }
       }
     } catch (err) {
+      if (!this.polling || this.currentPollSessionId !== sessionId) return;
       this.consecutiveFailures++;
       this.currentDelay = Math.min(this.baseDelay * Math.pow(2, this.consecutiveFailures), this.maxDelay);
       
@@ -132,8 +138,10 @@ class EventStreamService {
       console.error(`Error polling contract events (attempt ${this.consecutiveFailures}, retrying in ${this.currentDelay}ms):`, err);
     }
 
+    if (!this.polling || this.currentPollSessionId !== sessionId) return;
+
     // Schedule next poll execution
-    this.timeoutId = setTimeout(() => this.poll(), this.currentDelay);
+    this.timeoutId = setTimeout(() => this.poll(sessionId), this.currentDelay);
   }
 
   private stopPolling() {
@@ -142,6 +150,7 @@ class EventStreamService {
       this.timeoutId = null;
     }
     this.polling = false;
+    this.currentPollSessionId++;
   }
 
   private parseEvent(event: any): ContractEvent | null {

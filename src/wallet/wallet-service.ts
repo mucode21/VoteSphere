@@ -13,15 +13,18 @@ export interface WalletState {
   balance: string;
 }
 
-// Initialize StellarWalletsKit static configuration
-StellarWalletsKit.init({
-  modules: [
-    new FreighterModule(),
-    new AlbedoModule(),
-    new xBullModule()
-  ],
-  network: Networks.TESTNET
-});
+// Initialize StellarWalletsKit static configuration exactly once
+if (!(globalThis as any).__stellar_wallets_kit_initialized__) {
+  StellarWalletsKit.init({
+    modules: [
+      new FreighterModule(),
+      new AlbedoModule(),
+      new xBullModule()
+    ],
+    network: Networks.TESTNET
+  });
+  (globalThis as any).__stellar_wallets_kit_initialized__ = true;
+}
 
 /**
  * Maps our custom wallet identifier string to Creit-Tech Kit IDs
