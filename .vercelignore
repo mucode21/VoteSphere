@@ -1,0 +1,10 @@
+node_modules/
+contracts/target/
+dist/
+coverage/
+playwright-report/
+test-results/
+.git/
+.github/
+.gemini/
+*.log
