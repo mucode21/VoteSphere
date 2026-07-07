@@ -1,5 +1,5 @@
 #![no_std]
-use soroban_sdk::{contract, contractimpl, contracttype, Address, Env, Vec, Symbol, IntoVal, BytesN};
+use soroban_sdk::{contract, contractimpl, contracttype, contracterror, Address, Env, Vec, Symbol, IntoVal, BytesN};
 
 #[contracttype]
 pub enum DataKey {
@@ -8,6 +8,15 @@ pub enum DataKey {
     Results(u32),           // election_id -> Vec<u32> (tally per candidate)
     Winner(u32),            // election_id -> candidate_idx
     Finalized(u32),         // election_id -> bool
+}
+
+#[contracterror]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
+#[repr(u32)]
+pub enum ContractError {
+    AlreadyInitialized = 1,
+    NotInitialized = 2,
+    ElectionNotInitialized = 3,
 }
 
 // Client definition for VotingContract to satisfy contract-to-contract interaction
@@ -39,15 +48,17 @@ pub struct ResultContract;
 
 #[contractimpl]
 impl ResultContract {
-    pub fn initialize(env: Env, admin: Address) {
+    pub fn initialize(env: Env, admin: Address) -> Result<(), ContractError> {
         if env.storage().instance().has(&DataKey::Admin) {
-            panic!("Already initialized");
+            return Err(ContractError::AlreadyInitialized);
         }
         env.storage().instance().set(&DataKey::Admin, &admin);
+        Ok(())
     }
 
-    pub fn upgrade(env: Env, new_wasm_hash: BytesN<32>) {
-        let admin: Address = env.storage().instance().get(&DataKey::Admin).expect("Not initialized");
+    pub fn upgrade(env: Env, new_wasm_hash: BytesN<32>) -> Result<(), ContractError> {
+        let admin: Address = env.storage().instance().get(&DataKey::Admin)
+            .ok_or(ContractError::NotInitialized)?;
         admin.require_auth();
 
         env.deployer().update_current_contract_wasm(new_wasm_hash);
@@ -56,6 +67,7 @@ impl ResultContract {
             (Symbol::new(&env, "upgrade"), Symbol::new(&env, "contract_upgraded")),
             Symbol::new(&env, "results"),
         );
+        Ok(())
     }
 
     // Initializer called by ElectionRegistryContract
@@ -68,12 +80,12 @@ impl ResultContract {
     }
 
     // Aggregates results from VotingContract
-    pub fn calculate_results(env: Env, election_id: u32, voting_contract: Address) -> Vec<u32> {
+    pub fn calculate_results(env: Env, election_id: u32, voting_contract: Address) -> Result<Vec<u32>, ContractError> {
         let num_candidates: u32 = env
             .storage()
             .persistent()
             .get(&DataKey::NumCandidates(election_id))
-            .expect("Election not initialized in ResultContract");
+            .ok_or(ContractError::ElectionNotInitialized)?;
 
         let voting_client = VotingContractClient::new(&env, voting_contract);
         let mut results = Vec::new(&env);
@@ -101,7 +113,7 @@ impl ResultContract {
             (election_id, winner_idx, max_votes),
         );
 
-        results
+        Ok(results)
     }
 
     pub fn get_results(env: Env, election_id: u32) -> Vec<u32> {
