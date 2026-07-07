@@ -75,3 +75,11 @@ To ensure uninterrupted synchronicity with Soroban contract events, our `EventSt
 - **Recursive Polling timeouts**: Prevents process stack overflow compared to static intervals.
 - **Exponential Backoff**: Doubles polling intervals on RPC connection drops (starting at 4s, scaling up to 60s max) to protect resources and prevent server spam.
 - **Auto-reconnect Recovery**: Resets backoff delay instantly to 4s upon the first successful ledger retrieval.
+
+---
+
+## 🔗 Deployed Contracts (Stellar Testnet)
+
+- **Election Registry**: `CDSLWMGI34SPKOF5HONUQBYSGSULEBQHVEHDUASYH45323AA4H4GEPAJ`
+- **Voting Contract**: `CARN5Z3O2SHUF3JZG3LVGUABH27N52J5AQMI6LEX5QJLDPCCIND36TAA`
+- **Results Tally**: `CDREH7UZQHEGGRMDMQF3NVRYQXE2KTNRYDVP6T7L6LKHCP25RG4Q4HYU`
