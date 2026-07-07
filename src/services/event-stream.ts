@@ -5,6 +5,7 @@ import {
   CONTRACT_RESULTS_ID
 } from './stellar';
 import { scValToNative } from '@stellar/stellar-sdk';
+import { monitoring } from './monitoring/monitoring-service';
 
 export interface ContractEvent {
   id: string;
@@ -20,7 +21,13 @@ class EventStreamService {
   private listeners: Set<EventCallback> = new Set();
   private polling = false;
   private lastLedger = 0;
-  private intervalId: any = null;
+  private timeoutId: any = null;
+  
+  // Resiliency and backoff config
+  private consecutiveFailures = 0;
+  private baseDelay = 4000;
+  private maxDelay = 60000;
+  private currentDelay = 4000;
 
   constructor() {
     this.init();
@@ -30,7 +37,11 @@ class EventStreamService {
     try {
       const ledgerInfo = await rpcServer.getLatestLedger();
       this.lastLedger = ledgerInfo.sequence - 5; // Start 5 ledgers back to capture recent events
+      this.consecutiveFailures = 0;
+      this.currentDelay = this.baseDelay;
     } catch (e) {
+      this.consecutiveFailures++;
+      monitoring.logError(e, { context: 'EventStream init', consecutiveFailures: this.consecutiveFailures });
       console.error('Failed to get latest ledger:', e);
       this.lastLedger = 0;
     }
@@ -50,49 +61,73 @@ class EventStreamService {
   private startPolling() {
     if (this.polling) return;
     this.polling = true;
-    
-    this.intervalId = setInterval(async () => {
+    this.poll();
+  }
+
+  private async poll() {
+    if (!this.polling) return;
+
+    if (this.lastLedger === 0) {
+      await this.init();
       if (this.lastLedger === 0) {
-        await this.init();
-        if (this.lastLedger === 0) return;
+        // If still failed, schedule next try with backoff
+        this.consecutiveFailures++;
+        this.currentDelay = Math.min(this.baseDelay * Math.pow(2, this.consecutiveFailures), this.maxDelay);
+        this.timeoutId = setTimeout(() => this.poll(), this.currentDelay);
+        return;
       }
+    }
 
-      try {
-        const eventsResponse = await rpcServer.getEvents({
-          startLedger: this.lastLedger,
-          filters: [
-            {
-              type: 'contract',
-              contractIds: [CONTRACT_REGISTRY_ID, CONTRACT_VOTING_ID, CONTRACT_RESULTS_ID]
-            }
-          ],
-          limit: 100
-        });
+    try {
+      const eventsResponse = await rpcServer.getEvents({
+        startLedger: this.lastLedger,
+        filters: [
+          {
+            type: 'contract',
+            contractIds: [CONTRACT_REGISTRY_ID, CONTRACT_VOTING_ID, CONTRACT_RESULTS_ID]
+          }
+        ],
+        limit: 100
+      });
 
-        if (eventsResponse.events && eventsResponse.events.length > 0) {
-          // Sort events by ledger/id
-          const sortedEvents = eventsResponse.events.sort((a, b) => a.ledger - b.ledger);
-          
-          for (const ev of sortedEvents) {
-            const parsed = this.parseEvent(ev);
-            if (parsed) {
-              this.notify(parsed);
-            }
-            if (ev.ledger >= this.lastLedger) {
-              this.lastLedger = ev.ledger + 1;
-            }
+      // Reset backoff on successful request
+      this.consecutiveFailures = 0;
+      this.currentDelay = this.baseDelay;
+
+      if (eventsResponse.events && eventsResponse.events.length > 0) {
+        // Sort events by ledger/id
+        const sortedEvents = eventsResponse.events.sort((a, b) => a.ledger - b.ledger);
+        
+        for (const ev of sortedEvents) {
+          const parsed = this.parseEvent(ev);
+          if (parsed) {
+            this.notify(parsed);
+          }
+          if (ev.ledger >= this.lastLedger) {
+            this.lastLedger = ev.ledger + 1;
           }
         }
-      } catch (err) {
-        console.error('Error polling contract events:', err);
       }
-    }, 4000); // Poll every 4 seconds
+    } catch (err) {
+      this.consecutiveFailures++;
+      this.currentDelay = Math.min(this.baseDelay * Math.pow(2, this.consecutiveFailures), this.maxDelay);
+      
+      monitoring.logError(err, {
+        context: 'EventStream poll',
+        consecutiveFailures: this.consecutiveFailures,
+        nextRetryDelay: this.currentDelay
+      });
+      console.error(`Error polling contract events (attempt ${this.consecutiveFailures}, retrying in ${this.currentDelay}ms):`, err);
+    }
+
+    // Schedule next poll execution
+    this.timeoutId = setTimeout(() => this.poll(), this.currentDelay);
   }
 
   private stopPolling() {
-    if (this.intervalId) {
-      clearInterval(this.intervalId);
-      this.intervalId = null;
+    if (this.timeoutId) {
+      clearTimeout(this.timeoutId);
+      this.timeoutId = null;
     }
     this.polling = false;
   }
@@ -157,6 +192,7 @@ class EventStreamService {
         };
       }
     } catch (e) {
+      monitoring.logError(e, { context: 'EventStream parseEvent', rawEvent: event });
       console.error('Error parsing event:', e);
     }
     return null;
@@ -167,6 +203,7 @@ class EventStreamService {
       try {
         cb(event);
       } catch (err) {
+        monitoring.logError(err, { context: 'EventStream listener notify' });
         console.error('Listener callback error:', err);
       }
     });
