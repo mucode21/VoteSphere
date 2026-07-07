@@ -1,4 +1,5 @@
 import { submitTransaction } from '../stellar';
+import { monitoring } from '../monitoring/monitoring-service';
 
 export type TxStatus = 'idle' | 'signing' | 'submitting' | 'pending' | 'success' | 'failed';
 
@@ -124,11 +125,13 @@ class TransactionManager {
       }
 
       setStatus('success', undefined, txHash);
+      monitoring.logInfo(`Tx execution succeeded for "${actionName}"`, { txHash, recId });
       return txHash;
     } catch (e: any) {
       console.error(`Tx execution failed for action "${actionName}":`, e);
       const errorMsg = e.message || 'Transaction failed';
       setStatus('failed', errorMsg);
+      monitoring.logError(e, { actionName, recordId: recId });
       throw e;
     }
   }

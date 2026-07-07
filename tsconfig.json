@@ -25,5 +25,6 @@
       "@/*": ["src/*"]
     }
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": ["node_modules", "src/__tests__", "test/setup.ts", "tests/e2e"]
 }

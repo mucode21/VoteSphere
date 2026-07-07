@@ -3,6 +3,7 @@ import { WalletType, connectWallet as connectService, disconnectWallet as discon
 import { getXlmBalance } from '../services/stellar';
 import { ContractEvent } from '../services/event-stream';
 import { TxRecord } from '../services/transactions/tx-manager';
+import { monitoring } from '../services/monitoring/monitoring-service';
 
 interface VoteSphereState {
   walletConnected: boolean;
@@ -46,6 +47,7 @@ export const useStore = create<VoteSphereState>((set, get) => ({
           walletType: cachedType,
           userAddress: cachedAddr
         });
+        monitoring.setUserContext(cachedAddr);
         await get().refreshBalance();
       } else {
         localStorage.removeItem('votesphere_wallet_type');
@@ -63,6 +65,8 @@ export const useStore = create<VoteSphereState>((set, get) => ({
     });
     localStorage.setItem('votesphere_wallet_type', type);
     localStorage.setItem('votesphere_wallet_address', address);
+    monitoring.setUserContext(address);
+    monitoring.logInfo('Wallet session established', { walletType: type, userAddress: address });
     await get().refreshBalance();
   },
 
@@ -76,6 +80,8 @@ export const useStore = create<VoteSphereState>((set, get) => ({
     });
     localStorage.removeItem('votesphere_wallet_type');
     localStorage.removeItem('votesphere_wallet_address');
+    monitoring.clearUserContext();
+    monitoring.logInfo('Wallet session closed');
   },
 
   refreshBalance: async () => {
@@ -85,6 +91,7 @@ export const useStore = create<VoteSphereState>((set, get) => ({
         const balance = await getXlmBalance(userAddress);
         set({ xlmBalance: balance });
       } catch (e) {
+        monitoring.logError(e, { context: 'Store refreshBalance', userAddress });
         console.error('Failed refreshing balance in store:', e);
       }
     }
