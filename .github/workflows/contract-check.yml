@@ -1,0 +1,48 @@
+name: Smart Contract Verification
+
+on:
+  push:
+    paths:
+      - 'contracts/**'
+      - '.github/workflows/contract-check.yml'
+  pull_request:
+    paths:
+      - 'contracts/**'
+      - '.github/workflows/contract-check.yml'
+
+jobs:
+  rust-checks:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Setup Rust Toolchain
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        components: rustfmt, clippy
+        targets: wasm32-unknown-unknown
+
+    - name: Cargo Cache Setup
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          contracts/target/
+        key: ${{ runner.os }}-cargo-${{ hashFiles('contracts/Cargo.lock') }}
+
+    - name: Run Cargo Format Check
+      run: cargo fmt --manifest-path contracts/Cargo.toml --all -- --check
+
+    - name: Run Cargo Clippy Linting
+      run: cargo clippy --manifest-path contracts/Cargo.toml --all-targets --all-features -- -D warnings
+
+    - name: Run Contract Unit Tests
+      run: cargo test --manifest-path contracts/Cargo.toml --all-features
+
+    - name: Build WebAssembly Contracts
+      run: cargo build --manifest-path contracts/Cargo.toml --target wasm32-unknown-unknown --release
