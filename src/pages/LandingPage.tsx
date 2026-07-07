@@ -121,11 +121,26 @@ const LandingPage = ({ onNavigate }: LandingPageProps) => {
               </div>
             ) : (
               <div className="bg-surface-container-lowest executive-border executive-shadow rounded-xl p-8 relative z-10 w-full aspect-square flex flex-col justify-center items-center text-center">
-                <span className="material-symbols-outlined text-primary text-5xl mb-4">how_to_vote</span>
-                <h3 className="font-headline-sm text-headline-sm mb-2">No Elections Active</h3>
-                <p className="font-body-md text-body-md text-on-surface-variant max-w-xs">
-                  Create a new election on-chain using the Admin Wizard to get started.
+                <span className="material-symbols-outlined text-primary text-5xl mb-4 animate-pulse">how_to_vote</span>
+                <h3 className="font-headline-sm text-headline-sm mb-2 text-on-surface">No Elections Active</h3>
+                <p className="font-body-md text-body-md text-on-surface-variant max-w-xs mb-4">
+                  Be the first to propose a decentralized decision on the Stellar network!
                 </p>
+                <div className="text-left w-full max-w-xs bg-surface-container-low p-4 rounded border border-outline-variant/30 mb-6">
+                  <h4 className="font-bold text-xs uppercase tracking-wider text-primary mb-2">Suggested Demo Proposals:</h4>
+                  <ul className="text-xs text-on-surface-variant space-y-1.5">
+                    <li>• Protocol Upgrade Proposal Q4</li>
+                    <li>• Community Council Elections</li>
+                    <li>• Treasury Allocation Vote</li>
+                  </ul>
+                </div>
+                <button
+                  onClick={() => onNavigate('create')}
+                  className="bg-primary text-on-primary font-label-sm text-label-sm px-6 py-3 rounded uppercase tracking-wider hover:opacity-90 transition-opacity flex items-center gap-2 focus:outline-none"
+                >
+                  Create Demo Election
+                  <span className="material-symbols-outlined text-sm">add</span>
+                </button>
               </div>
             )}
           </div>

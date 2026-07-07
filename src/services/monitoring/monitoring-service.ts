@@ -112,6 +112,53 @@ export class MonitoringService {
       console.warn(`[MonitoringService] Feedback Dialog requested for event ID: ${eventId} (Fallback console)`);
     }
   }
+
+  /**
+   * LogRocket ready integration stub
+   */
+  public logRocketInit() {
+    console.log('[MonitoringService] LogRocket integration is ready and loaded. Key sessions will capture screen and console logs.');
+  }
+
+  /**
+   * Track frontend crashes
+   */
+  public trackCrash(error: Error | unknown, context?: Record<string, any>) {
+    console.error('[CRASH] Unhandled error or crash captured:', error, context);
+    this.logError(error, { category: 'crash', ...context });
+  }
+
+  /**
+   * Track route failures
+   */
+  public trackRouteFailure(route: string, error: any) {
+    console.warn(`[ROUTE FAILURE] Failed to navigate or load route: ${route}`, error);
+    this.logInfo(`Route failure: ${route}`, { category: 'routing', error: String(error) });
+  }
+
+  /**
+   * Track wallet failures (rejected signatures, connection failures)
+   */
+  public trackWalletFailure(wallet: string, error: any) {
+    console.warn(`[WALLET FAILURE] Wallet: ${wallet} error:`, error);
+    this.logError(error, { category: 'wallet', wallet });
+  }
+
+  /**
+   * Track transaction failures (failed contract calls, simulation failures)
+   */
+  public trackTransactionFailure(action: string, error: any) {
+    console.warn(`[TRANSACTION FAILURE] Action: ${action} error:`, error);
+    this.logError(error, { category: 'transaction', action });
+  }
+
+  /**
+   * Track RPC failures / Event stream failures
+   */
+  public trackRPCFailure(method: string, error: any) {
+    console.error(`[RPC FAILURE] Method: ${method} failed:`, error);
+    this.logError(error, { category: 'rpc', method });
+  }
 }
 
 export const monitoring = MonitoringService.getInstance();

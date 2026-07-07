@@ -5,6 +5,22 @@ import { ContractEvent } from '../services/event-stream';
 import { TxRecord } from '../services/transactions/tx-manager';
 import { monitoring } from '../services/monitoring/monitoring-service';
 
+export interface FeedbackItem {
+  id: string;
+  rating: number;
+  category: string;
+  comments: string;
+  timestamp: string;
+}
+
+export interface AppAnalytics {
+  electionsCreated: number;
+  votesCast: number;
+  walletConnections: number;
+  failedTransactions: number;
+  successfulTransactions: number;
+}
+
 interface VoteSphereState {
   walletConnected: boolean;
   walletType: WalletType | null;
@@ -13,6 +29,9 @@ interface VoteSphereState {
   transactions: TxRecord[];
   events: ContractEvent[];
   theme: 'light' | 'dark';
+  onboardingCompleted: boolean;
+  feedbackList: FeedbackItem[];
+  analytics: AppAnalytics;
   
   // Actions
   initializeStore: () => Promise<void>;
@@ -22,6 +41,9 @@ interface VoteSphereState {
   addEvent: (event: ContractEvent) => void;
   setTransactions: (txs: TxRecord[]) => void;
   setTheme: (theme: 'light' | 'dark') => void;
+  setOnboardingCompleted: (val: boolean) => void;
+  addFeedback: (rating: number, category: string, comments: string) => void;
+  trackMetric: (metric: keyof AppAnalytics) => void;
 }
 
 export const useStore = create<VoteSphereState>((set, get) => ({
@@ -32,11 +54,36 @@ export const useStore = create<VoteSphereState>((set, get) => ({
   transactions: [],
   events: [],
   theme: (document.documentElement.classList.contains('dark') ? 'dark' : 'light') as 'light' | 'dark',
+  onboardingCompleted: false,
+  feedbackList: [],
+  analytics: {
+    electionsCreated: 0,
+    votesCast: 0,
+    walletConnections: 0,
+    failedTransactions: 0,
+    successfulTransactions: 0
+  },
 
   initializeStore: async () => {
     const savedTheme = localStorage.getItem('theme') || 'dark';
     set({ theme: savedTheme as 'light' | 'dark' });
     
+    const savedOnboarding = localStorage.getItem('votesphere_onboarding_completed') === 'true';
+    const savedFeedback = JSON.parse(localStorage.getItem('votesphere_feedback_list') || '[]');
+    const savedAnalytics = JSON.parse(localStorage.getItem('votesphere_analytics') || JSON.stringify({
+      electionsCreated: 0,
+      votesCast: 0,
+      walletConnections: 0,
+      failedTransactions: 0,
+      successfulTransactions: 0
+    }));
+
+    set({
+      onboardingCompleted: savedOnboarding,
+      feedbackList: savedFeedback,
+      analytics: savedAnalytics
+    });
+
     const cachedType = localStorage.getItem('votesphere_wallet_type') as WalletType | null;
     const cachedAddr = localStorage.getItem('votesphere_wallet_address');
     if (cachedType && cachedAddr) {
@@ -67,6 +114,7 @@ export const useStore = create<VoteSphereState>((set, get) => ({
     localStorage.setItem('votesphere_wallet_address', address);
     monitoring.setUserContext(address);
     monitoring.logInfo('Wallet session established', { walletType: type, userAddress: address });
+    get().trackMetric('walletConnections');
     await get().refreshBalance();
   },
 
@@ -119,5 +167,36 @@ export const useStore = create<VoteSphereState>((set, get) => ({
     } else {
       document.documentElement.classList.remove('dark');
     }
+  },
+
+  setOnboardingCompleted: (val: boolean) => {
+    set({ onboardingCompleted: val });
+    localStorage.setItem('votesphere_onboarding_completed', String(val));
+  },
+
+  addFeedback: (rating: number, category: string, comments: string) => {
+    const newItem: FeedbackItem = {
+      id: Math.random().toString(36).substring(2, 9),
+      rating,
+      category,
+      comments,
+      timestamp: new Date().toISOString()
+    };
+    set(state => {
+      const updated = [newItem, ...state.feedbackList];
+      localStorage.setItem('votesphere_feedback_list', JSON.stringify(updated));
+      return { feedbackList: updated };
+    });
+  },
+
+  trackMetric: (metric: keyof AppAnalytics) => {
+    set(state => {
+      const updated = {
+        ...state.analytics,
+        [metric]: (state.analytics[metric] || 0) + 1
+      };
+      localStorage.setItem('votesphere_analytics', JSON.stringify(updated));
+      return { analytics: updated };
+    });
   }
 }));

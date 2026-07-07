@@ -1,0 +1,62 @@
+{
+  "project": "VoteSphere",
+  "version": "1.0.0",
+  "observability": {
+    "sentry": {
+      "dsn": "https://examplePublicKey@o0.ingest.sentry.io/0",
+      "environment": "production",
+      "tracesSampleRate": 0.2,
+      "replaysSessionSampleRate": 0.1,
+      "replaysOnErrorSampleRate": 1.0,
+      "alertRules": [
+        {
+          "name": "High Transaction Failure Rate",
+          "conditions": ["transaction.duration > 5000", "error.rate > 0.05"],
+          "actions": ["slack-channel-alerts", "email-devops"]
+        },
+        {
+          "name": "Wallet Signature Rejection Spike",
+          "conditions": ["wallet.signature_rejected.count > 10 in 5m"],
+          "actions": ["pagerduty-oncall"]
+        }
+      ]
+    },
+    "logrocket": {
+      "appId": "votesphere/production-mvp",
+      "consoleLogging": true,
+      "networkCapture": true,
+      "redactSensitiveInput": true,
+      "sessionRecording": true
+    },
+    "googleAnalytics": {
+      "measurementId": "G-DEMO123456",
+      "trackCustomDimensions": [
+        "wallet_type",
+        "election_id",
+        "transaction_status"
+      ]
+    }
+  },
+  "dashboardLayout": {
+    "panels": [
+      {
+        "id": 1,
+        "title": "Voter Turnout Velocity",
+        "type": "time-series",
+        "query": "count(event: vote_cast) group by candidateId"
+      },
+      {
+        "id": 2,
+        "title": "RPC Latency & Failures",
+        "type": "gauge",
+        "query": "avg(rpc.duration) filter status == failed"
+      },
+      {
+        "id": 3,
+        "title": "Wallet Connections by Provider",
+        "type": "pie",
+        "query": "count(wallet_connected) group by wallet_type"
+      }
+    ]
+  }
+}

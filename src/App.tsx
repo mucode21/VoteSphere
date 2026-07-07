@@ -12,11 +12,36 @@ import { eventStreamService, ContractEvent } from './services/event-stream';
 import { txManager } from './services/transactions/tx-manager';
 import { useStore } from './state/store';
 import { useToast } from './context/ToastContext';
+import OnboardingModal from './components/OnboardingModal';
+import FeedbackWidget from './components/FeedbackWidget';
+import { monitoring } from './services/monitoring/monitoring-service';
 
 const App = () => {
   const [currentTab, setCurrentTab] = useState<string>('landing');
   const [tabParams, setTabParams] = useState<any>(null);
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const toast = useToast();
+
+  // Global error handler for unhandled promise rejections and exceptions
+  useEffect(() => {
+    const handleGlobalError = (event: ErrorEvent) => {
+      monitoring.trackCrash(event.error || event.message, { type: 'global_error' });
+    };
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      monitoring.trackCrash(event.reason, { type: 'unhandled_rejection' });
+    };
+
+    window.addEventListener('error', handleGlobalError);
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+    
+    // Trigger LogRocket ready indicator
+    monitoring.logRocketInit();
+
+    return () => {
+      window.removeEventListener('error', handleGlobalError);
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+    };
+  }, []);
 
   // central store hooks
   const {
@@ -34,7 +59,14 @@ const App = () => {
 
   // Initialize store and recover active session on mount
   useEffect(() => {
-    initializeStore();
+    const runInit = async () => {
+      await initializeStore();
+      const saved = localStorage.getItem('votesphere_onboarding_completed') === 'true';
+      if (!saved) {
+        setIsOnboardingOpen(true);
+      }
+    };
+    runInit();
   }, [initializeStore]);
 
   // Balance polling every 30 seconds
@@ -158,12 +190,17 @@ const App = () => {
           <div className="font-display-lg text-primary text-lg">VoteSphere</div>
           <div>© {new Date().getFullYear()} VoteSphere. Built securely on Stellar Soroban.</div>
           <div className="flex gap-4 font-label-sm text-xs uppercase tracking-wider">
+            <button onClick={() => setIsOnboardingOpen(true)} className="hover:text-primary uppercase focus:outline-none">User Guide</button>
             <a href="#" className="hover:text-primary">Protocol</a>
             <a href="#" className="hover:text-primary">Ledger</a>
             <a href="#" className="hover:text-primary">Docs</a>
           </div>
         </div>
       </footer>
+
+      {/* Level 4 Production MVP Overlay Components */}
+      <OnboardingModal isOpen={isOnboardingOpen} onClose={() => setIsOnboardingOpen(false)} />
+      <FeedbackWidget />
     </div>
   );
 };

@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getElections, CONTRACT_REGISTRY_ID, CONTRACT_VOTING_ID } from '../services/stellar';
 import { eventLedgerFeed, eventStreamService, ContractEvent } from '../services/event-stream';
+import { useStore } from '../state/store';
 
 const DashboardPage = () => {
   const [liveEvents, setLiveEvents] = useState<ContractEvent[]>([...eventLedgerFeed]);
+  const { analytics } = useStore();
 
   // Fetch elections list for totals
   const { data: elections = [] } = useQuery({
@@ -23,6 +25,16 @@ const DashboardPage = () => {
   const totalElections = elections.length;
   const activeElections = elections.filter(e => !e.closed).length;
   const closedElections = elections.filter(e => e.closed).length;
+
+  // Compute MVP Analytics
+  const avgCandidates = totalElections > 0 
+    ? (elections.reduce((acc, el) => acc + el.candidates.length, 0) / totalElections).toFixed(1)
+    : '0.0';
+
+  const totalTx = analytics.successfulTransactions + analytics.failedTransactions;
+  const txSuccessRate = totalTx > 0 
+    ? Math.round((analytics.successfulTransactions / totalTx) * 100) 
+    : 100;
 
   return (
     <div className="max-w-container-max mx-auto w-full px-margin-mobile md:px-margin-desktop py-12">
@@ -63,6 +75,45 @@ const DashboardPage = () => {
           <p className="font-mono text-xs text-on-surface mt-2 truncate w-full px-2" title={CONTRACT_REGISTRY_ID}>
             {CONTRACT_REGISTRY_ID.slice(0, 8)}...{CONTRACT_REGISTRY_ID.slice(-8)}
           </p>
+        </div>
+      </div>
+
+      {/* MVP Performance & Adoption Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-gutter mb-12">
+        <div className="vellum-card rounded-xl p-6 flex items-center gap-4">
+          <span className="material-symbols-outlined text-primary text-4xl p-3 bg-surface-container-high rounded-full">group</span>
+          <div className="flex-grow">
+            <h4 className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">User Adoption</h4>
+            <div className="flex justify-between items-baseline mt-2">
+              <span className="font-headline-sm text-headline-sm text-on-surface">{analytics.walletConnections}</span>
+              <span className="text-xs text-on-surface-variant">Wallet Connections</span>
+            </div>
+            <p className="text-xs text-on-surface-variant mt-1">Average Candidates: {avgCandidates}</p>
+          </div>
+        </div>
+
+        <div className="vellum-card rounded-xl p-6 flex items-center gap-4">
+          <span className="material-symbols-outlined text-primary text-4xl p-3 bg-surface-container-high rounded-full">network_check</span>
+          <div className="flex-grow">
+            <h4 className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Reliability Rate</h4>
+            <div className="flex justify-between items-baseline mt-2">
+              <span className="font-headline-sm text-headline-sm text-on-surface">{txSuccessRate}%</span>
+              <span className="text-xs text-on-surface-variant">{analytics.successfulTransactions} Successful Tx</span>
+            </div>
+            <p className="text-xs text-on-surface-variant mt-1">Total Submissions: {totalTx}</p>
+          </div>
+        </div>
+
+        <div className="vellum-card rounded-xl p-6 flex items-center gap-4">
+          <span className="material-symbols-outlined text-primary text-4xl p-3 bg-surface-container-high rounded-full">analytics</span>
+          <div className="flex-grow">
+            <h4 className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Participation Stats</h4>
+            <div className="flex justify-between items-baseline mt-2">
+              <span className="font-headline-sm text-headline-sm text-on-surface">{analytics.votesCast}</span>
+              <span className="text-xs text-on-surface-variant">Votes Logged</span>
+            </div>
+            <p className="text-xs text-on-surface-variant mt-1">Avg Votes per Election: {(analytics.votesCast / Math.max(1, totalElections)).toFixed(1)}</p>
+          </div>
         </div>
       </div>
 
