@@ -54,6 +54,8 @@ impl<'a> RegistryContractClient<'a> {
 #[contract]
 pub struct VotingContract;
 
+// Safe and resilient voting contract implementation returning custom ContractError enums
+// instead of panicking, preventing WasmVm InvalidAction transaction traps on duplicate votes.
 #[contractimpl]
 impl VotingContract {
     pub fn initialize(env: Env, admin: Address) -> Result<(), ContractError> {
