@@ -12,9 +12,9 @@ import {
 } from '@stellar/stellar-sdk';
 
 // Load from environment or use default Testnet addresses
-export const CONTRACT_REGISTRY_ID = (import.meta as any).env.VITE_CONTRACT_REGISTRY_ID || 'CDDB4SGVCZVYNA2VOY4KTLWGR5VY6KFUVWD4S7A23NA4COQBP4QPH74M';
-export const CONTRACT_VOTING_ID = (import.meta as any).env.VITE_CONTRACT_VOTING_ID || 'CD2QP33BUWEMLWTEYV6XTDE56P5TJQC2VMGUN5C36OL3BHMLL6EZSILD';
-export const CONTRACT_RESULTS_ID = (import.meta as any).env.VITE_CONTRACT_RESULTS_ID || 'CADRSVZOA3KQQD6ZA5OJ2DFDI6TRQRC6LW4TXFZQ6YKPJZBU4DJBWIDH';
+export const CONTRACT_REGISTRY_ID = (import.meta as any).env.VITE_CONTRACT_REGISTRY_ID || 'CDSLWMGI34SPKOF5HONUQBYSGSULEBQHVEHDUASYH45323AA4H4GEPAJ';
+export const CONTRACT_VOTING_ID = (import.meta as any).env.VITE_CONTRACT_VOTING_ID || 'CARN5Z3O2SHUF3JZG3LVGUABH27N52J5AQMI6LEX5QJLDPCCIND36TAA';
+export const CONTRACT_RESULTS_ID = (import.meta as any).env.VITE_CONTRACT_RESULTS_ID || 'CDREH7UZQHEGGRMDMQF3NVRYQXE2KTNRYDVP6T7L6LKHCP25RG4Q4HYU';
 
 export const RPC_URL = (import.meta as any).env.VITE_RPC_URL || 'https://soroban-testnet.stellar.org';
 export const HORIZON_URL = (import.meta as any).env.VITE_HORIZON_URL || 'https://horizon-testnet.stellar.org';
