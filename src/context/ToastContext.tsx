@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback, useMemo } from 'react';
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
 
@@ -87,8 +87,16 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const contextValue = useMemo(() => ({
+    showToast,
+    success,
+    error,
+    warning,
+    info
+  }), [showToast, success, error, warning, info]);
+
   return (
-    <ToastContext.Provider value={{ showToast, success, error, warning, info }}>
+    <ToastContext.Provider value={contextValue}>
       {children}
       
       {/* Toast Portal/Container */}
