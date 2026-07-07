@@ -174,6 +174,31 @@ export const getElectionWinner = async (electionId: number): Promise<number> => 
   }
 };
 
+const getTransactionStatusRaw = async (hash: string): Promise<string> => {
+  try {
+    const response = await fetch('https://soroban-testnet.stellar.org', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'getTransaction',
+        params: { hash }
+      })
+    });
+    const json = await response.json();
+    if (json.error) {
+      throw new Error(json.error.message || 'JSON-RPC error');
+    }
+    return json.result?.status || 'NOT_FOUND';
+  } catch (err) {
+    console.warn('Raw getTransactionStatus failed:', err);
+    return 'UNKNOWN';
+  }
+};
+
 // Helper to wait for Soroban transaction submission to be confirmed
 export const submitTransaction = async (signedXdr: string): Promise<string> => {
   const tx = TransactionBuilder.fromXDR(signedXdr, NETWORK_PASSPHRASE);
@@ -184,12 +209,20 @@ export const submitTransaction = async (signedXdr: string): Promise<string> => {
   }
 
   // Poll for result
-  let retries = 10;
+  let retries = 15;
   while (retries > 0) {
-    const getRes = await rpcServer.getTransaction(sendRes.hash);
-    if (getRes.status === 'SUCCESS') {
+    let status = 'NOT_FOUND';
+    try {
+      const getRes = await rpcServer.getTransaction(sendRes.hash);
+      status = getRes.status;
+    } catch (err: any) {
+      console.warn('SDK getTransaction threw parsing error, trying raw RPC fallback...', err);
+      status = await getTransactionStatusRaw(sendRes.hash);
+    }
+
+    if (status === 'SUCCESS') {
       return sendRes.hash;
-    } else if (getRes.status === 'FAILED') {
+    } else if (status === 'FAILED') {
       throw new Error('Transaction execution failed on-chain.');
     }
     await new Promise(resolve => setTimeout(resolve, 1500));
