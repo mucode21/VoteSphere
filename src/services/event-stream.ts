@@ -22,6 +22,7 @@ class EventStreamService {
   private polling = false;
   private lastLedger = 0;
   private timeoutId: any = null;
+  private processedEventIds: Set<string> = new Set();
   
   // Resiliency and backoff config
   private consecutiveFailures = 0;
@@ -99,12 +100,23 @@ class EventStreamService {
         const sortedEvents = eventsResponse.events.sort((a, b) => a.ledger - b.ledger);
         
         for (const ev of sortedEvents) {
+          if (this.processedEventIds.has(ev.id)) {
+            continue;
+          }
+          this.processedEventIds.add(ev.id);
+          
+          // Limit memory usage
+          if (this.processedEventIds.size > 1000) {
+            const firstKey = this.processedEventIds.keys().next().value;
+            if (firstKey) this.processedEventIds.delete(firstKey);
+          }
+
           const parsed = this.parseEvent(ev);
           if (parsed) {
             this.notify(parsed);
           }
           if (ev.ledger >= this.lastLedger) {
-            this.lastLedger = ev.ledger + 1;
+            this.lastLedger = ev.ledger;
           }
         }
       }
