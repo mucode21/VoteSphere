@@ -66,47 +66,49 @@ VoteSphere directly addresses these challenges using blockchain primitives:
 ## 🔗 Live Links
 
 ### 🌐 Live Demo
-* **Netlify Preview**: `https://votesphere-soroban.netlify.app` *(Replace with your Netlify URL)*
-
+* **Netlify Preview**: `https://vote-sphere1.netlify.app/`
+  
 ### 📁 GitHub Repository
-* **Source Code**: `https://github.com/mucode21/VoteSphere` *(Replace with your repo URL)*
+* **Source Code**: `https://github.com/mucode21/VoteSphere`
 
 ### 🎥 Demo Video
-* **Product Walkthrough**: `https://youtu.be/dummy_walkthrough` *(Replace with your video URL)*
+* **Product Walkthrough**: `https://drive.google.com/file/d/1UBWIwZNoLMP8aIwzEPPUaA1uwzxHBVND/view?usp=drivesdk` 
 
 ---
 
 ## 📸 Screenshots
 
 ### Landing Page
-![Landing Page](https://raw.githubusercontent.com/mucode21/VoteSphere/main/docs/screenshots/landing.png)
+
+<img width="1901" height="928" alt="image" src="https://github.com/user-attachments/assets/c226dbd9-2a59-4c56-b4cb-178ee7165696" />
 
 ### Wallet Connection
-![Wallet Connection](https://raw.githubusercontent.com/mucode21/VoteSphere/main/docs/screenshots/wallet_connect.png)
+
+<img width="1902" height="936" alt="image" src="https://github.com/user-attachments/assets/60acae0c-760f-41a7-aef5-0724b4f943b3" />
 
 ### Election Creation
-![Election Creation](https://raw.githubusercontent.com/mucode21/VoteSphere/main/docs/screenshots/election_create.png)
+
+<img width="1896" height="936" alt="image" src="https://github.com/user-attachments/assets/f169e8ed-3f14-418f-aed9-3673dbbbd596" />
 
 ### Election Details
-![Election Details](https://raw.githubusercontent.com/mucode21/VoteSphere/main/docs/screenshots/election_details.png)
+
+<img width="1899" height="935" alt="image" src="https://github.com/user-attachments/assets/dc0dea37-3ec2-4948-b739-e926ebc5d4c0" />
 
 ### Voting Interface
-![Voting Interface](https://raw.githubusercontent.com/mucode21/VoteSphere/main/docs/screenshots/voting_interface.png)
 
-### Results Dashboard
-![Results Dashboard](https://raw.githubusercontent.com/mucode21/VoteSphere/main/docs/screenshots/results_dashboard.png)
+<img width="1919" height="1928" alt="image" src="https://github.com/user-attachments/assets/888ecad2-1b59-4cdd-86bc-fb58ac90a337" />
 
 ### Mobile Responsive View
-![Mobile Responsive](https://raw.githubusercontent.com/mucode21/VoteSphere/main/docs/screenshots/mobile_responsive.png)
 
-### Transaction Success
-![Transaction Success](https://raw.githubusercontent.com/mucode21/VoteSphere/main/docs/screenshots/tx_success.png)
+<img width="398" height="858" alt="image" src="https://github.com/user-attachments/assets/af8f62a3-028b-44d0-bd8a-5fb95136caef" />
+
+### Creation Success
+
+<img width="1903" height="938" alt="image" src="https://github.com/user-attachments/assets/5f261b1f-a3e8-458a-85b8-463c9643f247" />
 
 ### GitHub Actions Pipelines
-![GitHub Actions CI](https://raw.githubusercontent.com/mucode21/VoteSphere/main/docs/screenshots/github_actions.png)
 
-### Passing Unit & E2E Tests
-![Passing Tests](https://raw.githubusercontent.com/mucode21/VoteSphere/main/docs/screenshots/passing_tests.png)
+<img width="1903" height="974" alt="image" src="https://github.com/user-attachments/assets/d693ccb6-9660-44cb-85fe-2bbf22159eca" />
 
 ---
 
@@ -483,6 +485,8 @@ VoteSphere uses GitHub Actions to automate lint verification, testing, and produ
 | **Frontend CI** | `.github/workflows/ci.yml` | Validates TypeScript compilation, runs ESLint checks, and executes Vitest test suites. | ![Passing](https://img.shields.io/badge/Status-Passing-brightgreen) |
 | **Contract Checks** | `.github/workflows/contract-check.yml` | Formats Rust workspaces, evaluates code against Clippy, and runs Rust unit tests. | ![Passing](https://img.shields.io/badge/Status-Passing-brightgreen) |
 | **Deploy Previews** | `.github/workflows/deploy-preview.yml` | Builds release-grade WASM contract binaries and Vite client bundles to ensure zero compile warnings. | ![Passing](https://img.shields.io/badge/Status-Passing-brightgreen) |
+
+<img width="1903" height="975" alt="image" src="https://github.com/user-attachments/assets/f259d0e8-a4d4-45e0-ba20-45b0717b695e" />
 
 ---
 
