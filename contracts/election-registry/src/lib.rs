@@ -1,5 +1,5 @@
 #![no_std]
-use soroban_sdk::{contract, contractimpl, contracttype, Address, Env, String, Vec, IntoVal, BytesN, Symbol};
+use soroban_sdk::{contract, contractimpl, contracttype, contracterror, Address, Env, String, Vec, IntoVal, BytesN, Symbol};
 
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -18,6 +18,17 @@ pub enum DataKey {
     Admin,
     ElectionIds,
     Election(u32),
+}
+
+#[contracterror]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
+#[repr(u32)]
+pub enum ContractError {
+    AlreadyInitialized = 1,
+    NotInitialized = 2,
+    NotFound = 3,
+    InvalidInput = 4,
+    AlreadyClosed = 5,
 }
 
 // Client definition for ResultContract to satisfy contract-to-contract interaction
@@ -60,15 +71,17 @@ pub struct ElectionRegistryContract;
 
 #[contractimpl]
 impl ElectionRegistryContract {
-    pub fn initialize(env: Env, admin: Address) {
+    pub fn initialize(env: Env, admin: Address) -> Result<(), ContractError> {
         if env.storage().instance().has(&DataKey::Admin) {
-            panic!("Already initialized");
+            return Err(ContractError::AlreadyInitialized);
         }
         env.storage().instance().set(&DataKey::Admin, &admin);
+        Ok(())
     }
 
-    pub fn upgrade(env: Env, new_wasm_hash: BytesN<32>) {
-        let admin: Address = env.storage().instance().get(&DataKey::Admin).expect("Not initialized");
+    pub fn upgrade(env: Env, new_wasm_hash: BytesN<32>) -> Result<(), ContractError> {
+        let admin: Address = env.storage().instance().get(&DataKey::Admin)
+            .ok_or(ContractError::NotInitialized)?;
         admin.require_auth();
 
         env.deployer().update_current_contract_wasm(new_wasm_hash);
@@ -78,10 +91,12 @@ impl ElectionRegistryContract {
             (Symbol::new(&env, "upgrade"), Symbol::new(&env, "contract_upgraded")),
             Symbol::new(&env, "registry"),
         );
+        Ok(())
     }
 
-    pub fn get_admin(env: Env) -> Address {
-        env.storage().instance().get(&DataKey::Admin).expect("Not initialized")
+    pub fn get_admin(env: Env) -> Result<Address, ContractError> {
+        env.storage().instance().get(&DataKey::Admin)
+            .ok_or(ContractError::NotInitialized)
     }
 
     pub fn create_election(
@@ -92,25 +107,19 @@ impl ElectionRegistryContract {
         candidates: Vec<String>,
         end_time: u64,
         result_contract: Address,
-    ) {
+    ) -> Result<(), ContractError> {
         // Input validation
-        if title.len() == 0 {
-            panic!("Title cannot be empty");
-        }
-        if description.len() == 0 {
-            panic!("Description cannot be empty");
-        }
-        if candidates.len() < 2 {
-            panic!("Must have at least 2 candidates");
+        if title.len() == 0 || description.len() == 0 || candidates.len() < 2 {
+            return Err(ContractError::InvalidInput);
         }
         let now = env.ledger().timestamp();
         if end_time <= now {
-            panic!("End time must be in the future");
+            return Err(ContractError::InvalidInput);
         }
 
         let key = DataKey::Election(id);
         if env.storage().persistent().has(&key) {
-            panic!("Election already exists");
+            return Err(ContractError::InvalidInput);
         }
 
         let election = Election {
@@ -144,6 +153,7 @@ impl ElectionRegistryContract {
             (Symbol::new(&env, "registry"), Symbol::new(&env, "election_created")),
             (id, title),
         );
+        Ok(())
     }
 
     pub fn update_election(
@@ -151,20 +161,22 @@ impl ElectionRegistryContract {
         id: u32,
         title: String,
         description: String,
-    ) {
+    ) -> Result<(), ContractError> {
         // Role authorization check
-        let admin: Address = env.storage().instance().get(&DataKey::Admin).expect("Not initialized");
+        let admin: Address = env.storage().instance().get(&DataKey::Admin)
+            .ok_or(ContractError::NotInitialized)?;
         admin.require_auth();
 
         if title.len() == 0 || description.len() == 0 {
-            panic!("Title/description cannot be empty");
+            return Err(ContractError::InvalidInput);
         }
 
         let key = DataKey::Election(id);
-        let mut election: Election = env.storage().persistent().get(&key).expect("Election not found");
+        let mut election: Election = env.storage().persistent().get(&key)
+            .ok_or(ContractError::NotFound)?;
         
         if election.closed {
-            panic!("Election already closed");
+            return Err(ContractError::AlreadyClosed);
         }
 
         election.title = title.clone();
@@ -177,14 +189,15 @@ impl ElectionRegistryContract {
             (Symbol::new(&env, "registry"), Symbol::new(&env, "election_updated")),
             (id, title),
         );
+        Ok(())
     }
 
-    pub fn get_election(env: Env, id: u32) -> Election {
+    pub fn get_election(env: Env, id: u32) -> Result<Election, ContractError> {
         let key = DataKey::Election(id);
         env.storage()
             .persistent()
             .get(&key)
-            .expect("Election not found")
+            .ok_or(ContractError::NotFound)
     }
 
     pub fn list_elections(env: Env) -> Vec<Election> {
@@ -204,9 +217,10 @@ impl ElectionRegistryContract {
         list
     }
 
-    pub fn close_election(env: Env, id: u32) {
+    pub fn close_election(env: Env, id: u32) -> Result<(), ContractError> {
         // Role authorization check
-        let admin: Address = env.storage().instance().get(&DataKey::Admin).expect("Not initialized");
+        let admin: Address = env.storage().instance().get(&DataKey::Admin)
+            .ok_or(ContractError::NotInitialized)?;
         admin.require_auth();
 
         let key = DataKey::Election(id);
@@ -214,10 +228,10 @@ impl ElectionRegistryContract {
             .storage()
             .persistent()
             .get(&key)
-            .expect("Election not found");
+            .ok_or(ContractError::NotFound)?;
 
         if election.closed {
-            panic!("Election already closed");
+            return Err(ContractError::AlreadyClosed);
         }
 
         election.closed = true;
@@ -232,6 +246,7 @@ impl ElectionRegistryContract {
             (Symbol::new(&env, "registry"), Symbol::new(&env, "election_closed")),
             id,
         );
+        Ok(())
     }
 
     pub fn version(_env: Env) -> u32 {
@@ -268,7 +283,6 @@ mod test {
     }
 
     #[test]
-    #[should_panic(expected = "Already initialized")]
     fn test_double_initialize_panics() {
         let env = Env::default();
         let contract_id = env.register_contract(None, ElectionRegistryContract);
@@ -276,7 +290,8 @@ mod test {
 
         let admin = Address::generate(&env);
         client.initialize(&admin);
-        client.initialize(&admin);
+        let err = client.try_initialize(&admin).unwrap_err();
+        assert!(err.is_ok()); // Invocation failed cleanly with a contract error
     }
 
     #[test]
