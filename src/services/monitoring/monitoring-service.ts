@@ -3,6 +3,8 @@ import * as Sentry from '@sentry/react';
 const SENTRY_DSN = (import.meta as any).env.VITE_SENTRY_DSN || '';
 const ENVIRONMENT = (import.meta as any).env.VITE_ENV || 'development';
 
+// Observability layer providing central error monitoring and user telemetry tracking,
+// with a console fallback mechanism for local testing environments.
 export class MonitoringService {
   private static instance: MonitoringService;
   private isInitialized = false;
