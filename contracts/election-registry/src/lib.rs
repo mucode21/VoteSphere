@@ -69,6 +69,8 @@ impl<'a> ResultContractClient<'a> {
 #[contract]
 pub struct ElectionRegistryContract;
 
+// Safe and resilient contract implementation returning custom ContractError enums
+// instead of panicking, preventing WasmVm InvalidAction transaction traps.
 #[contractimpl]
 impl ElectionRegistryContract {
     pub fn initialize(env: Env, admin: Address) -> Result<(), ContractError> {
