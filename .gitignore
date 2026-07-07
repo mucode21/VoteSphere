@@ -7,3 +7,6 @@ target/
 .gemini/
 test_snapshots/
 Cargo.lock
+coverage/
+playwright-report/
+test-results/
